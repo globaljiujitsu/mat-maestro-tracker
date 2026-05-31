@@ -27,7 +27,7 @@ function ClassesPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("classes")
-        .select("*, branches(name), profiles:instructor_id(full_name)")
+        .select("*, branches(name)")
         .gte("date", today.toISOString().slice(0, 10))
         .lte("date", endRange)
         .eq("status", "scheduled")
@@ -143,7 +143,6 @@ function ClassesPage() {
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{c.branches?.name ?? "—"}</span>
                     <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />Cap. {c.max_capacity}</span>
-                    {c.profiles?.full_name && <span>Prof. {c.profiles.full_name}</span>}
                   </div>
                   <div className="mt-4">
                     {booked ? (
