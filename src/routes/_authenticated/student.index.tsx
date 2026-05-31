@@ -41,7 +41,7 @@ function StudentHome() {
       const today = new Date().toISOString().slice(0, 10);
       const { data } = await supabase
         .from("attendance")
-        .select("id, class_id, booking_status, classes(id, title, date, time, branches(name))")
+        .select("id, class_id, booking_status, classes!inner(id, title, date, time, branches(name))")
         .eq("student_id", userId)
         .eq("booking_status", "confirmed")
         .gte("classes.date", today)
