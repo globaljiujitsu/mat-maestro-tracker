@@ -1,42 +1,56 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { RolePanel } from "@/components/RolePanel";
-import { Trophy, Activity, Clock, Award } from "lucide-react";
+import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/use-auth";
+import { BrandLogo } from "@/components/BrandLogo";
+import { BottomTabs, type TabItem } from "@/components/BottomTabs";
+import { Bell, LogOut, Home, CalendarDays, BookOpen, Trophy, User } from "lucide-react";
+
+const TABS: TabItem[] = [
+  { to: "/student", label: "Inicio", icon: Home },
+  { to: "/student/classes", label: "Clases", icon: CalendarDays },
+  { to: "/student/techniques", label: "Técnicas", icon: BookOpen },
+  { to: "/student/championships", label: "Campeonatos", icon: Trophy },
+  { to: "/student/profile", label: "Perfil", icon: User },
+];
 
 export const Route = createFileRoute("/_authenticated/student")({
-  component: StudentPage,
+  component: StudentLayout,
 });
 
-function StudentPage() {
-  return (
-    <RolePanel
-      allow={["student", "admin", "instructor"]}
-      title="Mi Dashboard"
-      subtitle="Tu progreso, clases, ranking y campeonatos."
-    >
-      <div className="grid grid-cols-2 gap-3">
-        <Stat icon={<Activity />} label="Asistencia" value="0%" />
-        <Stat icon={<Clock />} label="Horas de Entrenamiento" value="0 h" />
-        <Stat icon={<Trophy />} label="Ranking Sucursal" value="—" />
-        <Stat icon={<Award />} label="Campeonatos" value="0" />
-      </div>
-      <div className="mt-8 rounded-3xl border border-border bg-surface p-6 shadow-elevated">
-        <h2 className="text-lg font-semibold text-foreground">Próximamente</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Inscripción a clases, biblioteca de técnicas con animaciones Lottie, historial de campeonatos y certificados.
-        </p>
-      </div>
-    </RolePanel>
-  );
-}
+function StudentLayout() {
+  const { role, signOut } = useAuth();
+  if (role === "admin") return <Navigate to="/admin" />;
+  if (role === "instructor") return <Navigate to="/instructor" />;
 
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface p-4 shadow-elevated">
-      <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary [&>svg]:h-4 [&>svg]:w-4">
-        {icon}
-      </div>
-      <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className="mt-1 font-display text-2xl font-bold text-foreground">{value}</p>
+    <div className="min-h-screen bg-gradient-midnight safe-top">
+      <div className="bg-hero pointer-events-none fixed inset-x-0 top-0 -z-10 h-[45vh]" />
+
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3">
+          <BrandLogo size="sm" />
+          <div className="flex items-center gap-2">
+            <button
+              aria-label="Notificaciones"
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-foreground transition-liquid hover:border-primary/50"
+            >
+              <Bell className="h-4 w-4" />
+            </button>
+            <button
+              onClick={signOut}
+              aria-label="Cerrar sesión"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-foreground transition-liquid hover:border-destructive/60 hover:text-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-5xl px-5 pb-32 pt-5">
+        <Outlet />
+      </main>
+
+      <BottomTabs items={TABS} />
     </div>
   );
 }
