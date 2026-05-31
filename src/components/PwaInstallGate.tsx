@@ -6,7 +6,8 @@ import {
   isMobile,
   type BeforeInstallPromptEvent,
 } from "@/lib/pwa";
-import { Share, Plus, Download, Smartphone } from "lucide-react";
+import { Share, Plus, Download } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 
 interface Props {
   children: ReactNode;
@@ -61,8 +62,8 @@ export function PwaInstallGate({ children }: Props) {
     <div className="fixed inset-0 z-[9999] flex flex-col bg-gradient-midnight safe-top safe-bottom">
       <div className="bg-hero absolute inset-0 -z-10" />
       <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-        <div className="mb-10 flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-gold shadow-gold">
-          <Smartphone className="h-12 w-12 text-primary-foreground" strokeWidth={1.5} />
+        <div className="mb-10">
+          <BrandLogo size="xl" />
         </div>
 
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
