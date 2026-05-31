@@ -8,10 +8,10 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { BeltBadge } from "@/components/BeltBadge";
 
-type TechStatus = "not_evaluated" | "learning" | "mastered";
+type TechStatus = "not_evaluated" | "in_progress" | "mastered";
 const STATUSES: { v: TechStatus; label: string; cls: string }[] = [
   { v: "not_evaluated", label: "Pendiente", cls: "border-border text-muted-foreground" },
-  { v: "learning", label: "Aprendiendo", cls: "border-primary/40 text-primary bg-primary/10" },
+  { v: "in_progress", label: "Aprendiendo", cls: "border-primary/40 text-primary bg-primary/10" },
   { v: "mastered", label: "Dominado", cls: "border-success/40 text-success bg-success/10" },
 ];
 
