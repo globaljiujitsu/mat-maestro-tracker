@@ -1,36 +1,38 @@
 import { cn } from "@/lib/utils";
+import logoUrl from "@/assets/logo-global-jiujitsu.png";
 
 interface Props {
   className?: string;
-  size?: "sm" | "md" | "lg";
+  size?: "sm" | "md" | "lg" | "xl";
+  showWordmark?: boolean;
 }
 
 /**
- * Placeholder for the academy logo. Slot is reserved across all surfaces
- * (login wrapper, nav bar, dashboard header) so a future SVG can drop in.
+ * Official Global Jiu-Jitsu academy logo. White artwork — designed to sit on
+ * the midnight surfaces of the app. Use `size="xl"` for splash/login screens.
  */
-export function BrandLogo({ className, size = "md" }: Props) {
-  const dim =
-    size === "sm" ? "h-9 w-9 text-base" : size === "lg" ? "h-16 w-16 text-2xl" : "h-12 w-12 text-lg";
+export function BrandLogo({ className, size = "md", showWordmark = false }: Props) {
+  const h =
+    size === "sm" ? "h-7" : size === "md" ? "h-10" : size === "lg" ? "h-16" : "h-24";
+
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <div
-        className={cn(
-          "flex items-center justify-center rounded-xl bg-gradient-gold font-display font-black text-primary-foreground shadow-gold ring-gold",
-          dim,
-        )}
-        aria-label="Global Jiu-Jitsu"
-      >
-        GJJ
-      </div>
-      <div className="flex flex-col leading-tight">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-primary">
-          Global
-        </span>
-        <span className="font-display text-base font-bold text-foreground">
-          Jiu-Jitsu
-        </span>
-      </div>
+      <img
+        src={logoUrl}
+        alt="Global Jiu-Jitsu"
+        className={cn(h, "w-auto select-none drop-shadow-[0_4px_20px_oklch(0.78_0.13_85_/_0.25)]")}
+        draggable={false}
+      />
+      {showWordmark && (
+        <div className="flex flex-col leading-tight">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.3em] text-primary">
+            Global
+          </span>
+          <span className="font-display text-base font-bold text-foreground">
+            Jiu-Jitsu
+          </span>
+        </div>
+      )}
     </div>
   );
 }
