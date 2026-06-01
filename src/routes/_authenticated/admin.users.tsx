@@ -179,7 +179,7 @@ function CreateUserForm({
 }: {
   branches: { id: string; name: string }[];
   onCreated: () => void;
-  createFn: typeof adminCreateUser;
+  createFn: ReturnType<typeof useServerFn<typeof adminCreateUser>>;
 }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
