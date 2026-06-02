@@ -58,7 +58,13 @@ export const adminCreateUser = createServerFn({ method: "POST" })
 
     // Patch instructor history if provided (handle_new_user already inserted the row).
     if (data.role === "instructor") {
-      const patch: Record<string, unknown> = {};
+      const patch: {
+        total_classes_taught?: number;
+        total_hours_taught?: number;
+        years_of_experience?: number;
+        championships_won?: string[];
+        biography?: string;
+      } = {};
       if (data.totalClassesTaught !== undefined) patch.total_classes_taught = data.totalClassesTaught;
       if (data.totalHoursTaught !== undefined) patch.total_hours_taught = data.totalHoursTaught;
       if (data.yearsOfExperience !== undefined) patch.years_of_experience = data.yearsOfExperience;
