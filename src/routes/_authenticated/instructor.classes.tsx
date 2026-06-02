@@ -106,7 +106,7 @@ function InstructorClassesPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Gestión</p>
           <h1 className="mt-1 font-display text-3xl font-bold text-foreground">Mis Clases</h1>
           {profile?.full_name && (
-            <p className="mt-1 text-xs text-muted-foreground">Profesor: <span className="font-semibold text-foreground">{profile.full_name}</span></p>
+            <p className="mt-1 text-xs text-muted-foreground">Profesor: <span className="font-semibold text-foreground">{instructorName}</span></p>
           )}
         </div>
         <button
@@ -127,7 +127,7 @@ function InstructorClassesPage() {
         >
           {profile?.full_name && (
             <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground">
-              Lanzada por: <span className="font-bold text-primary">{profile.full_name}</span>
+              Lanzada por: <span className="font-bold text-primary">{instructorName}</span>
             </div>
           )}
           <Field label="Título">
