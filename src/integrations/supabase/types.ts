@@ -44,17 +44,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "attendance_class_id_fkey"
+            foreignKeyName: "attendance_class_fkey"
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "attendance_student_id_fkey"
+            foreignKeyName: "attendance_student_fkey"
             columns: ["student_id"]
             isOneToOne: false
-            referencedRelation: "students"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -110,10 +110,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "certificates_student_id_fkey"
+            foreignKeyName: "cert_student_fkey"
             columns: ["student_id"]
             isOneToOne: false
-            referencedRelation: "students"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -151,10 +151,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "championships_student_id_fkey"
+            foreignKeyName: "championships_student_fkey"
             columns: ["student_id"]
             isOneToOne: false
-            referencedRelation: "students"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -165,6 +165,7 @@ export type Database = {
           created_at: string
           date: string
           description: string | null
+          duration_hours: number
           id: string
           instructor_id: string
           max_capacity: number
@@ -178,6 +179,7 @@ export type Database = {
           created_at?: string
           date: string
           description?: string | null
+          duration_hours?: number
           id?: string
           instructor_id: string
           max_capacity?: number
@@ -191,6 +193,7 @@ export type Database = {
           created_at?: string
           date?: string
           description?: string | null
+          duration_hours?: number
           id?: string
           instructor_id?: string
           max_capacity?: number
@@ -201,17 +204,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "classes_branch_id_fkey"
+            foreignKeyName: "classes_branch_fkey"
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "classes_instructor_id_fkey"
+            foreignKeyName: "classes_instructor_fkey"
             columns: ["instructor_id"]
             isOneToOne: false
-            referencedRelation: "instructors"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -243,10 +246,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "instructor_videos_instructor_id_fkey"
+            foreignKeyName: "iv_instructor_fkey"
             columns: ["instructor_id"]
             isOneToOne: false
-            referencedRelation: "instructors"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -262,6 +265,7 @@ export type Database = {
           id: string
           is_active: boolean
           total_classes_taught: number
+          total_hours_taught: number
           years_of_experience: number | null
         }
         Insert: {
@@ -274,6 +278,7 @@ export type Database = {
           id: string
           is_active?: boolean
           total_classes_taught?: number
+          total_hours_taught?: number
           years_of_experience?: number | null
         }
         Update: {
@@ -286,11 +291,12 @@ export type Database = {
           id?: string
           is_active?: boolean
           total_classes_taught?: number
+          total_hours_taught?: number
           years_of_experience?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "instructors_branch_id_fkey"
+            foreignKeyName: "instructors_branch_fkey"
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
@@ -455,7 +461,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "students_branch_id_fkey"
+            foreignKeyName: "students_branch_fkey"
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
@@ -497,21 +503,21 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "technique_progress_evaluated_by_fkey"
+            foreignKeyName: "tp_evaluator_fkey"
             columns: ["evaluated_by"]
             isOneToOne: false
-            referencedRelation: "instructors"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "technique_progress_student_id_fkey"
+            foreignKeyName: "tp_student_fkey"
             columns: ["student_id"]
             isOneToOne: false
-            referencedRelation: "students"
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "technique_progress_technique_id_fkey"
+            foreignKeyName: "tp_technique_fkey"
             columns: ["technique_id"]
             isOneToOne: false
             referencedRelation: "techniques"
@@ -530,6 +536,7 @@ export type Database = {
           learning_objectives: string[] | null
           lottie_url: string | null
           title: string
+          video_url: string | null
         }
         Insert: {
           belt_level: Database["public"]["Enums"]["belt_rank"]
@@ -541,6 +548,7 @@ export type Database = {
           learning_objectives?: string[] | null
           lottie_url?: string | null
           title: string
+          video_url?: string | null
         }
         Update: {
           belt_level?: Database["public"]["Enums"]["belt_rank"]
@@ -552,6 +560,7 @@ export type Database = {
           learning_objectives?: string[] | null
           lottie_url?: string | null
           title?: string
+          video_url?: string | null
         }
         Relationships: []
       }

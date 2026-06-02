@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { adminCreateUser } from "@/lib/admin-users.functions";
-import { Loader2, Search, Shield, UserPlus, Plus } from "lucide-react";
+import { adminCreateUser, adminDeleteUser } from "@/lib/admin-users.functions";
+import { Loader2, Search, Shield, UserPlus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useMemo } from "react";
 import { BeltBadge } from "@/components/BeltBadge";
@@ -20,6 +20,7 @@ function AdminUsers() {
   const [q, setQ] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const createUserFn = useServerFn(adminCreateUser);
+  const deleteUserFn = useServerFn(adminDeleteUser);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-all-users"],
@@ -69,6 +70,17 @@ function AdminUsers() {
     },
     onSuccess: () => {
       toast.success("Faixa actualizada");
+      qc.invalidateQueries({ queryKey: ["admin-all-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteUser = useMutation({
+    mutationFn: async (userId: string) => {
+      await deleteUserFn({ data: { userId } });
+    },
+    onSuccess: () => {
+      toast.success("Cuenta eliminada");
       qc.invalidateQueries({ queryKey: ["admin-all-users"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -159,6 +171,16 @@ function AdminUsers() {
                       <option value="black">Preta</option>
                     </select>
                   )}
+                  <button
+                    onClick={() => {
+                      if (confirm(`Eliminar ${u.full_name ?? u.email}? Esto borra TODO del banco (clases, técnicas, campeonatos, etc).`)) {
+                        deleteUser.mutate(u.id);
+                      }
+                    }}
+                    className="mt-1 flex items-center gap-1 rounded-lg border border-destructive/40 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-3 w-3" /> Eliminar
+                  </button>
                 </div>
               </div>
             </li>
@@ -187,6 +209,11 @@ function CreateUserForm({
   const [role, setRole] = useState<AppRole>("student");
   const [belt, setBelt] = useState<Belt>("white");
   const [branchId, setBranchId] = useState<string>("");
+  const [totalClassesTaught, setTotalClassesTaught] = useState<string>("");
+  const [totalHoursTaught, setTotalHoursTaught] = useState<string>("");
+  const [yearsOfExperience, setYearsOfExperience] = useState<string>("");
+  const [champs, setChamps] = useState<string>("");
+  const [biography, setBiography] = useState("");
   const [pending, setPending] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -201,10 +228,18 @@ function CreateUserForm({
           role,
           beltRank: role === "admin" ? undefined : belt,
           branchId: branchId || null,
+          totalClassesTaught: role === "instructor" && totalClassesTaught ? Number(totalClassesTaught) : undefined,
+          totalHoursTaught: role === "instructor" && totalHoursTaught ? Number(totalHoursTaught) : undefined,
+          yearsOfExperience: role === "instructor" && yearsOfExperience ? Number(yearsOfExperience) : undefined,
+          championshipsWon: role === "instructor" && champs.trim()
+            ? champs.split(",").map((s) => s.trim()).filter(Boolean)
+            : undefined,
+          biography: role === "instructor" && biography.trim() ? biography.trim() : undefined,
         },
       });
       toast.success("Cuenta creada");
       setEmail(""); setPassword(""); setFullName(""); setRole("student"); setBelt("white"); setBranchId("");
+      setTotalClassesTaught(""); setTotalHoursTaught(""); setYearsOfExperience(""); setChamps(""); setBiography("");
       onCreated();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al crear");
@@ -241,6 +276,20 @@ function CreateUserForm({
           ))}
         </select>
       </div>
+
+      {role === "instructor" && (
+        <div className="space-y-3 rounded-xl border border-border bg-background/40 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Historial del profesor (opcional)</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <input type="number" min={0} value={totalClassesTaught} onChange={(e) => setTotalClassesTaught(e.target.value)} placeholder="Clases dadas" className="input-base" />
+            <input type="number" min={0} step={0.5} value={totalHoursTaught} onChange={(e) => setTotalHoursTaught(e.target.value)} placeholder="Horas dadas" className="input-base" />
+            <input type="number" min={0} value={yearsOfExperience} onChange={(e) => setYearsOfExperience(e.target.value)} placeholder="Años exp." className="input-base" />
+          </div>
+          <input value={champs} onChange={(e) => setChamps(e.target.value)} placeholder="Campeonatos (separar por coma)" className="input-base" />
+          <textarea value={biography} onChange={(e) => setBiography(e.target.value)} placeholder="Biografía (opcional)" className="input-base min-h-[64px] resize-none" />
+        </div>
+      )}
+
       <button
         type="submit"
         disabled={pending}

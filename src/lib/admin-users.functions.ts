@@ -6,28 +6,37 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 const belts = ["white", "blue", "purple", "brown", "black"] as const;
 const roles = ["admin", "instructor", "student"] as const;
 
-const Input = z.object({
+const CreateInput = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(72),
   fullName: z.string().min(1).max(120),
   role: z.enum(roles),
   beltRank: z.enum(belts).optional(),
   branchId: z.string().uuid().nullable().optional(),
+  // Optional history when creating instructor accounts
+  totalClassesTaught: z.number().int().min(0).max(100000).optional(),
+  totalHoursTaught: z.number().min(0).max(1000000).optional(),
+  yearsOfExperience: z.number().int().min(0).max(100).optional(),
+  championshipsWon: z.array(z.string().min(1).max(160)).max(50).optional(),
+  biography: z.string().max(2000).optional(),
 });
+
+async function assertCallerIsAdmin(supabase: { from: typeof supabaseAdmin.from }, userId: string) {
+  const { data, error } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Solo administradores pueden ejecutar esta acción.");
+}
 
 export const adminCreateUser = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => Input.parse(data))
+  .inputValidator((data: unknown) => CreateInput.parse(data))
   .handler(async ({ data, context }) => {
-    // Verify caller is admin
-    const { data: roleRow, error: rErr } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (rErr) throw new Error(rErr.message);
-    if (!roleRow) throw new Error("Solo administradores pueden crear cuentas.");
+    await assertCallerIsAdmin(context.supabase, context.userId);
 
     const meta: Record<string, string> = {
       full_name: data.fullName,
@@ -44,5 +53,43 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       user_metadata: meta,
     });
     if (error) throw new Error(error.message);
-    return { id: created.user?.id };
+    const newId = created.user?.id;
+    if (!newId) throw new Error("No se pudo crear la cuenta.");
+
+    // Patch instructor history if provided (handle_new_user already inserted the row).
+    if (data.role === "instructor") {
+      const patch: {
+        total_classes_taught?: number;
+        total_hours_taught?: number;
+        years_of_experience?: number;
+        championships_won?: string[];
+        biography?: string;
+      } = {};
+      if (data.totalClassesTaught !== undefined) patch.total_classes_taught = data.totalClassesTaught;
+      if (data.totalHoursTaught !== undefined) patch.total_hours_taught = data.totalHoursTaught;
+      if (data.yearsOfExperience !== undefined) patch.years_of_experience = data.yearsOfExperience;
+      if (data.championshipsWon && data.championshipsWon.length > 0) patch.championships_won = data.championshipsWon;
+      if (data.biography) patch.biography = data.biography;
+      if (Object.keys(patch).length > 0) {
+        const { error: uErr } = await supabaseAdmin.from("instructors").update(patch).eq("id", newId);
+        if (uErr) throw new Error(uErr.message);
+      }
+    }
+
+    return { id: newId };
+  });
+
+const DeleteInput = z.object({ userId: z.string().uuid() });
+
+export const adminDeleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => DeleteInput.parse(data))
+  .handler(async ({ data, context }) => {
+    await assertCallerIsAdmin(context.supabase, context.userId);
+    if (data.userId === context.userId) {
+      throw new Error("No puedes eliminar tu propia cuenta.");
+    }
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
