@@ -34,7 +34,8 @@ const EMPTY_FORM: FormState = {
 };
 
 function InstructorClassesPage() {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const instructorName = (user?.user_metadata?.full_name as string | undefined) ?? user?.email ?? "";
   const userId = user?.id ?? "";
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
