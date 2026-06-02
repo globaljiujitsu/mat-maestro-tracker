@@ -44,10 +44,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "attendance_class_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "attendance_class_id_fkey"
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_student_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -110,6 +124,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "cert_student_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "certificates_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -151,6 +172,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "championships_student_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "championships_student_id_fkey"
             columns: ["student_id"]
             isOneToOne: false
@@ -165,6 +193,7 @@ export type Database = {
           created_at: string
           date: string
           description: string | null
+          duration_hours: number
           id: string
           instructor_id: string
           max_capacity: number
@@ -178,6 +207,7 @@ export type Database = {
           created_at?: string
           date: string
           description?: string | null
+          duration_hours?: number
           id?: string
           instructor_id: string
           max_capacity?: number
@@ -191,6 +221,7 @@ export type Database = {
           created_at?: string
           date?: string
           description?: string | null
+          duration_hours?: number
           id?: string
           instructor_id?: string
           max_capacity?: number
@@ -201,10 +232,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "classes_branch_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "classes_branch_id_fkey"
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_instructor_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -249,6 +294,13 @@ export type Database = {
             referencedRelation: "instructors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "iv_instructor_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       instructors: {
@@ -262,6 +314,7 @@ export type Database = {
           id: string
           is_active: boolean
           total_classes_taught: number
+          total_hours_taught: number
           years_of_experience: number | null
         }
         Insert: {
@@ -274,6 +327,7 @@ export type Database = {
           id: string
           is_active?: boolean
           total_classes_taught?: number
+          total_hours_taught?: number
           years_of_experience?: number | null
         }
         Update: {
@@ -286,9 +340,17 @@ export type Database = {
           id?: string
           is_active?: boolean
           total_classes_taught?: number
+          total_hours_taught?: number
           years_of_experience?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "instructors_branch_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "instructors_branch_id_fkey"
             columns: ["branch_id"]
@@ -455,6 +517,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "students_branch_fkey"
+            columns: ["branch_id"]
+            isOneToOne: false
+            referencedRelation: "branches"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "students_branch_id_fkey"
             columns: ["branch_id"]
             isOneToOne: false
@@ -517,6 +586,27 @@ export type Database = {
             referencedRelation: "techniques"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tp_evaluator_fkey"
+            columns: ["evaluated_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tp_student_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tp_technique_fkey"
+            columns: ["technique_id"]
+            isOneToOne: false
+            referencedRelation: "techniques"
+            referencedColumns: ["id"]
+          },
         ]
       }
       techniques: {
@@ -530,6 +620,7 @@ export type Database = {
           learning_objectives: string[] | null
           lottie_url: string | null
           title: string
+          video_url: string | null
         }
         Insert: {
           belt_level: Database["public"]["Enums"]["belt_rank"]
@@ -541,6 +632,7 @@ export type Database = {
           learning_objectives?: string[] | null
           lottie_url?: string | null
           title: string
+          video_url?: string | null
         }
         Update: {
           belt_level?: Database["public"]["Enums"]["belt_rank"]
@@ -552,6 +644,7 @@ export type Database = {
           learning_objectives?: string[] | null
           lottie_url?: string | null
           title?: string
+          video_url?: string | null
         }
         Relationships: []
       }
