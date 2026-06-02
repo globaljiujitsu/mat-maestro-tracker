@@ -5,20 +5,35 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { BeltBadge } from "@/components/BeltBadge";
 import { EmptyState } from "@/components/EmptyState";
-import { BookOpen, X, CheckCircle2, Circle, Clock } from "lucide-react";
-import Lottie from "lottie-react";
+import { BookOpen, X, CheckCircle2, Circle, Clock, Lock, PlayCircle } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/student/techniques")({
   component: TechniquesPage,
 });
 
-const BELTS = ["white", "blue", "purple", "brown", "black"] as const;
-type Belt = (typeof BELTS)[number];
+const BELT_ORDER = ["white", "blue", "purple", "brown", "black"] as const;
+type Belt = (typeof BELT_ORDER)[number];
 
 function TechniquesPage() {
   const { user } = useAuth();
   const userId = user?.id ?? "";
-  const [belt, setBelt] = useState<Belt>("white");
+
+  const { data: student } = useQuery({
+    queryKey: ["student-belt", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data } = await supabase.from("students").select("belt_rank").eq("id", userId).maybeSingle();
+      return data;
+    },
+  });
+
+  const studentBelt = (student?.belt_rank as Belt | undefined) ?? "white";
+  const allowedBelts = useMemo(() => {
+    const idx = BELT_ORDER.indexOf(studentBelt);
+    return BELT_ORDER.slice(0, idx + 1);
+  }, [studentBelt]);
+
+  const [belt, setBelt] = useState<Belt>(studentBelt);
   const [selected, setSelected] = useState<string | null>(null);
 
   const { data: techniques } = useQuery({
@@ -55,21 +70,32 @@ function TechniquesPage() {
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Biblioteca</p>
         <h1 className="mt-1 font-display text-3xl font-bold text-foreground">Técnicas</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Tu faixa: <BeltBadge belt={studentBelt} /> · acceso a {allowedBelts.length} {allowedBelts.length === 1 ? "nivel" : "niveles"}
+        </p>
       </div>
 
       <div className="-mx-5 overflow-x-auto px-5">
         <div className="flex gap-2">
-          {BELTS.map((b) => (
-            <button
-              key={b}
-              onClick={() => setBelt(b)}
-              className={`shrink-0 rounded-full border px-3 py-1.5 transition-liquid ${
-                belt === b ? "border-primary bg-primary/10" : "border-border bg-surface"
-              }`}
-            >
-              <BeltBadge belt={b} />
-            </button>
-          ))}
+          {BELT_ORDER.map((b) => {
+            const locked = !allowedBelts.includes(b);
+            return (
+              <button
+                key={b}
+                onClick={() => !locked && setBelt(b)}
+                disabled={locked}
+                className={`shrink-0 rounded-full border px-3 py-1.5 transition-liquid ${
+                  belt === b && !locked ? "border-primary bg-primary/10" : "border-border bg-surface"
+                } ${locked ? "opacity-40" : ""}`}
+                aria-label={locked ? `Bloqueado — faixa superior` : `Ver ${b}`}
+              >
+                <span className="flex items-center gap-1.5">
+                  <BeltBadge belt={b} />
+                  {locked && <Lock className="h-3 w-3 text-muted-foreground" />}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -85,8 +111,11 @@ function TechniquesPage() {
                   onClick={() => setSelected(t.id)}
                   className="w-full rounded-2xl border border-border bg-surface p-4 text-left shadow-elevated transition-liquid hover:border-primary/50"
                 >
-                  <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-                    {t.category}
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                      {t.category}
+                    </span>
+                    {t.video_url && <PlayCircle className="h-4 w-4 text-primary" />}
                   </div>
                   <p className="font-display text-base font-semibold text-foreground">{t.title}</p>
                   {t.description && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{t.description}</p>}
@@ -128,20 +157,10 @@ function TechniqueDrawer({
   status,
   onClose,
 }: {
-  technique: { id: string; title: string; description: string | null; category: string; lottie_url: string | null; learning_objectives: string[] | null };
+  technique: { id: string; title: string; description: string | null; category: string; video_url: string | null; learning_objectives: string[] | null };
   status: string;
   onClose: () => void;
 }) {
-  const { data: lottieData } = useQuery({
-    queryKey: ["lottie", technique.lottie_url],
-    enabled: !!technique.lottie_url,
-    queryFn: async () => {
-      const res = await fetch(technique.lottie_url!);
-      if (!res.ok) throw new Error("Lottie fetch failed");
-      return res.json();
-    },
-  });
-
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-background/80 backdrop-blur-sm" onClick={onClose}>
       <div
@@ -160,17 +179,20 @@ function TechniqueDrawer({
 
         <StatusPill status={status} />
 
-        {lottieData ? (
-          <div className="my-5 overflow-hidden rounded-2xl border border-border bg-background">
-            <Lottie animationData={lottieData} loop />
-          </div>
-        ) : technique.lottie_url ? (
-          <div className="my-5 flex h-48 items-center justify-center rounded-2xl border border-dashed border-border bg-background text-sm text-muted-foreground">
-            Cargando animación…
+        {technique.video_url ? (
+          <div className="my-5 aspect-video overflow-hidden rounded-2xl border border-border bg-black">
+            <iframe
+              src={technique.video_url}
+              title={technique.title}
+              className="h-full w-full"
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
           </div>
         ) : (
           <div className="my-5 flex h-48 items-center justify-center rounded-2xl border border-dashed border-border bg-background text-sm text-muted-foreground">
-            Animación próximamente
+            Vídeo próximamente
           </div>
         )}
 
