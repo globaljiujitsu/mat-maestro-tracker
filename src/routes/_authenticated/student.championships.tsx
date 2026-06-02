@@ -106,8 +106,10 @@ function AddChampionshipDialog({ userId, onClose, onSaved }: { userId: string; o
     mutationFn: async () => {
       let photo_url: string | null = null;
       if (photoFile) {
-        const path = `${userId}/${Date.now()}-${photoFile.name}`;
-        const up = await supabase.storage.from("championships").upload(path, photoFile);
+        const { compressImage } = await import("@/lib/image-compress");
+        const compressed = await compressImage(photoFile, 1024, 0.72);
+        const path = `${userId}/${Date.now()}.jpg`;
+        const up = await supabase.storage.from("championships").upload(path, compressed, { contentType: "image/jpeg" });
         if (up.error) throw up.error;
         const { data } = supabase.storage.from("championships").getPublicUrl(path);
         photo_url = data.publicUrl;
