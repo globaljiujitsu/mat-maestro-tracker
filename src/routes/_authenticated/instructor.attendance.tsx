@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "@/components/EmptyState";
-import { ClipboardCheck, Check, X, Loader2, CalendarDays } from "lucide-react";
+import { ClipboardCheck, Check, X, Loader2, CalendarDays, RotateCcw } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
@@ -38,12 +38,23 @@ function AttendancePage() {
     queryKey: ["class-attendance", selectedClassId],
     enabled: !!selectedClassId,
     queryFn: async () => {
-      const { data } = await supabase
+      // Two-step fetch: avoids relying on PostgREST embed and is robust if FKs change.
+      const { data: rows, error } = await supabase
         .from("attendance")
-        .select("id, student_id, booking_status, check_in_status, profiles:student_id(full_name, avatar_url)")
+        .select("id, student_id, booking_status, check_in_status, created_at")
         .eq("class_id", selectedClassId!)
         .order("created_at");
-      return data ?? [];
+      if (error) throw error;
+      const ids = [...new Set((rows ?? []).map((r) => r.student_id))];
+      let profileMap = new Map<string, { full_name: string | null; avatar_url: string | null }>();
+      if (ids.length > 0) {
+        const { data: profs } = await supabase
+          .from("profiles")
+          .select("id, full_name, avatar_url")
+          .in("id", ids);
+        profileMap = new Map((profs ?? []).map((p) => [p.id, { full_name: p.full_name, avatar_url: p.avatar_url }]));
+      }
+      return (rows ?? []).map((r) => ({ ...r, profile: profileMap.get(r.student_id) ?? null }));
     },
   });
 
@@ -66,7 +77,7 @@ function AttendancePage() {
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Control</p>
         <h1 className="mt-1 font-display text-3xl font-bold text-foreground">Asistencia</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Pre-confirma reservas y registra la asistencia real.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Marca o desmarca presencia · las horas se ajustan al instante.</p>
       </div>
 
       <div>
@@ -94,13 +105,21 @@ function AttendancePage() {
       ) : (
         <ul className="space-y-2.5">
           {confirmed.map((a) => {
-            const name = (a.profiles as { full_name?: string } | null)?.full_name ?? "Alumno";
+            const name = a.profile?.full_name ?? "Alumno";
+            const statusLabel =
+              a.check_in_status === "present" ? "Presente"
+              : a.check_in_status === "absent" ? "Ausente"
+              : "Pendiente";
+            const statusCls =
+              a.check_in_status === "present" ? "text-success"
+              : a.check_in_status === "absent" ? "text-destructive"
+              : "text-muted-foreground";
             return (
               <li key={a.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-4 shadow-elevated">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-foreground">{name}</p>
                   <p className="mt-0.5 text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Estado: <span className={a.check_in_status === "present" ? "text-success" : a.check_in_status === "absent" ? "text-destructive" : "text-muted-foreground"}>{a.check_in_status}</span>
+                    Estado: <span className={statusCls}>{statusLabel}</span>
                   </p>
                 </div>
                 <div className="flex gap-1.5">
@@ -117,6 +136,14 @@ function AttendancePage() {
                     aria-label="Ausente"
                   >
                     <X className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => updateStatus.mutate({ id: a.id, status: "pending" })}
+                    className={`flex h-9 w-9 items-center justify-center rounded-lg border transition-liquid ${a.check_in_status === "pending" ? "border-primary bg-primary/20 text-primary" : "border-border text-muted-foreground hover:border-primary/60 hover:text-primary"}`}
+                    aria-label="Reiniciar"
+                    title="Desmarcar"
+                  >
+                    <RotateCcw className="h-4 w-4" />
                   </button>
                 </div>
               </li>
