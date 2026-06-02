@@ -51,24 +51,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "attendance_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "attendance_student_fkey"
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "attendance_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -130,13 +116,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "certificates_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
         ]
       }
       championships: {
@@ -176,13 +155,6 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "championships_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -239,24 +211,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "classes_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "classes_instructor_fkey"
             columns: ["instructor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "classes_instructor_id_fkey"
-            columns: ["instructor_id"]
-            isOneToOne: false
-            referencedRelation: "instructors"
             referencedColumns: ["id"]
           },
         ]
@@ -287,13 +245,6 @@ export type Database = {
           youtube_url?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "instructor_videos_instructor_id_fkey"
-            columns: ["instructor_id"]
-            isOneToOne: false
-            referencedRelation: "instructors"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "iv_instructor_fkey"
             columns: ["instructor_id"]
@@ -346,13 +297,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "instructors_branch_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "instructors_branch_id_fkey"
             columns: ["branch_id"]
             isOneToOne: false
             referencedRelation: "branches"
@@ -524,13 +468,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "students_branch_id_fkey"
-            columns: ["branch_id"]
-            isOneToOne: false
-            referencedRelation: "branches"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "students_id_fkey"
             columns: ["id"]
             isOneToOne: true
@@ -565,27 +502,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "technique_progress_evaluated_by_fkey"
-            columns: ["evaluated_by"]
-            isOneToOne: false
-            referencedRelation: "instructors"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "technique_progress_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "technique_progress_technique_id_fkey"
-            columns: ["technique_id"]
-            isOneToOne: false
-            referencedRelation: "techniques"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "tp_evaluator_fkey"
             columns: ["evaluated_by"]
