@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "@/components/EmptyState";
-import { CalendarDays, Plus, Trash2, Loader2, MapPin, Users } from "lucide-react";
+import { CalendarDays, Plus, Trash2, Loader2, MapPin, Users, Clock } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ interface FormState {
   time: string;
   branch_id: string;
   max_capacity: number;
+  duration_hours: number;
 }
 
 const EMPTY_FORM: FormState = {
@@ -29,10 +30,11 @@ const EMPTY_FORM: FormState = {
   time: "19:00",
   branch_id: "",
   max_capacity: 20,
+  duration_hours: 1.5,
 };
 
 function InstructorClassesPage() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const userId = user?.id ?? "";
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -69,12 +71,13 @@ function InstructorClassesPage() {
         time: form.time,
         branch_id: form.branch_id,
         max_capacity: form.max_capacity,
+        duration_hours: form.duration_hours,
         status: "scheduled",
       });
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Clase creada");
+      toast.success("Clase creada · alumnos notificados");
       setOpen(false);
       setForm(EMPTY_FORM);
       qc.invalidateQueries({ queryKey: ["my-classes"] });
@@ -101,6 +104,9 @@ function InstructorClassesPage() {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Gestión</p>
           <h1 className="mt-1 font-display text-3xl font-bold text-foreground">Mis Clases</h1>
+          {profile?.full_name && (
+            <p className="mt-1 text-xs text-muted-foreground">Profesor: <span className="font-semibold text-foreground">{profile.full_name}</span></p>
+          )}
         </div>
         <button
           onClick={() => setOpen((v) => !v)}
@@ -118,71 +124,40 @@ function InstructorClassesPage() {
           }}
           className="space-y-3 rounded-2xl border border-border bg-surface p-4 shadow-elevated"
         >
+          {profile?.full_name && (
+            <div className="rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-xs text-foreground">
+              Lanzada por: <span className="font-bold text-primary">{profile.full_name}</span>
+            </div>
+          )}
           <Field label="Título">
-            <input
-              required
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="input-base"
-              placeholder="Fundamentos · No-Gi"
-            />
+            <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="input-base" placeholder="Fundamentos · No-Gi" />
           </Field>
           <Field label="Descripción">
-            <textarea
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="input-base min-h-[64px] resize-none"
-              placeholder="Opcional"
-            />
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="input-base min-h-[64px] resize-none" placeholder="Opcional" />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Fecha">
-              <input
-                type="date"
-                required
-                value={form.date}
-                onChange={(e) => setForm({ ...form, date: e.target.value })}
-                className="input-base"
-              />
+              <input type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="input-base" />
             </Field>
             <Field label="Hora">
-              <input
-                type="time"
-                required
-                value={form.time}
-                onChange={(e) => setForm({ ...form, time: e.target.value })}
-                className="input-base"
-              />
+              <input type="time" required value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} className="input-base" />
             </Field>
           </div>
           <Field label="Sucursal">
-            <select
-              required
-              value={form.branch_id}
-              onChange={(e) => setForm({ ...form, branch_id: e.target.value })}
-              className="input-base"
-            >
+            <select required value={form.branch_id} onChange={(e) => setForm({ ...form, branch_id: e.target.value })} className="input-base">
               <option value="">Selecciona…</option>
-              {(branches ?? []).map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
-              ))}
+              {(branches ?? []).map((b) => (<option key={b.id} value={b.id}>{b.name}</option>))}
             </select>
           </Field>
-          <Field label="Capacidad máxima">
-            <input
-              type="number"
-              min={1}
-              max={100}
-              value={form.max_capacity}
-              onChange={(e) => setForm({ ...form, max_capacity: Number(e.target.value) })}
-              className="input-base"
-            />
-          </Field>
-          <button
-            type="submit"
-            disabled={create.isPending}
-            className="w-full rounded-xl bg-gradient-gold py-3 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-gold disabled:opacity-60"
-          >
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Duración (horas)">
+              <input type="number" min={0.5} max={6} step={0.5} value={form.duration_hours} onChange={(e) => setForm({ ...form, duration_hours: Number(e.target.value) })} className="input-base" />
+            </Field>
+            <Field label="Capacidad máx.">
+              <input type="number" min={1} max={100} value={form.max_capacity} onChange={(e) => setForm({ ...form, max_capacity: Number(e.target.value) })} className="input-base" />
+            </Field>
+          </div>
+          <button type="submit" disabled={create.isPending} className="w-full rounded-xl bg-gradient-gold py-3 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-gold disabled:opacity-60">
             {create.isPending ? "Creando…" : "Crear clase"}
           </button>
         </form>
@@ -204,16 +179,11 @@ function InstructorClassesPage() {
                   <p className="mt-1 font-display font-semibold text-foreground">{c.title}</p>
                   <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{c.branches?.name ?? "—"}</span>
+                    <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{c.duration_hours}h</span>
                     <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" />Cap. {c.max_capacity}</span>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    if (confirm(`¿Eliminar "${c.title}"?`)) del.mutate(c.id);
-                  }}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-destructive/40 text-destructive hover:bg-destructive/10"
-                  aria-label="Eliminar"
-                >
+                <button onClick={() => { if (confirm(`¿Eliminar "${c.title}"?`)) del.mutate(c.id); }} className="flex h-9 w-9 items-center justify-center rounded-lg border border-destructive/40 text-destructive hover:bg-destructive/10" aria-label="Eliminar">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
