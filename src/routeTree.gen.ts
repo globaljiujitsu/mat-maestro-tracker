@@ -23,6 +23,7 @@ import { Route as AuthenticatedStudentProfileRouteImport } from './routes/_authe
 import { Route as AuthenticatedStudentClassesRouteImport } from './routes/_authenticated/student.classes'
 import { Route as AuthenticatedStudentChampionshipsRouteImport } from './routes/_authenticated/student.championships'
 import { Route as AuthenticatedInstructorTechniquesRouteImport } from './routes/_authenticated/instructor.techniques'
+import { Route as AuthenticatedInstructorStudentsRouteImport } from './routes/_authenticated/instructor.students'
 import { Route as AuthenticatedInstructorClassesRouteImport } from './routes/_authenticated/instructor.classes'
 import { Route as AuthenticatedInstructorAttendanceRouteImport } from './routes/_authenticated/instructor.attendance'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin.users'
@@ -105,6 +106,12 @@ const AuthenticatedInstructorTechniquesRoute =
     path: '/techniques',
     getParentRoute: () => AuthenticatedInstructorRoute,
   } as any)
+const AuthenticatedInstructorStudentsRoute =
+  AuthenticatedInstructorStudentsRouteImport.update({
+    id: '/students',
+    path: '/students',
+    getParentRoute: () => AuthenticatedInstructorRoute,
+  } as any)
 const AuthenticatedInstructorClassesRoute =
   AuthenticatedInstructorClassesRouteImport.update({
     id: '/classes',
@@ -146,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/instructor/attendance': typeof AuthenticatedInstructorAttendanceRoute
   '/instructor/classes': typeof AuthenticatedInstructorClassesRoute
+  '/instructor/students': typeof AuthenticatedInstructorStudentsRoute
   '/instructor/techniques': typeof AuthenticatedInstructorTechniquesRoute
   '/student/championships': typeof AuthenticatedStudentChampionshipsRoute
   '/student/classes': typeof AuthenticatedStudentClassesRoute
@@ -163,6 +171,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/instructor/attendance': typeof AuthenticatedInstructorAttendanceRoute
   '/instructor/classes': typeof AuthenticatedInstructorClassesRoute
+  '/instructor/students': typeof AuthenticatedInstructorStudentsRoute
   '/instructor/techniques': typeof AuthenticatedInstructorTechniquesRoute
   '/student/championships': typeof AuthenticatedStudentChampionshipsRoute
   '/student/classes': typeof AuthenticatedStudentClassesRoute
@@ -185,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/instructor/attendance': typeof AuthenticatedInstructorAttendanceRoute
   '/_authenticated/instructor/classes': typeof AuthenticatedInstructorClassesRoute
+  '/_authenticated/instructor/students': typeof AuthenticatedInstructorStudentsRoute
   '/_authenticated/instructor/techniques': typeof AuthenticatedInstructorTechniquesRoute
   '/_authenticated/student/championships': typeof AuthenticatedStudentChampionshipsRoute
   '/_authenticated/student/classes': typeof AuthenticatedStudentClassesRoute
@@ -207,6 +217,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/instructor/attendance'
     | '/instructor/classes'
+    | '/instructor/students'
     | '/instructor/techniques'
     | '/student/championships'
     | '/student/classes'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/instructor/attendance'
     | '/instructor/classes'
+    | '/instructor/students'
     | '/instructor/techniques'
     | '/student/championships'
     | '/student/classes'
@@ -245,6 +257,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/users'
     | '/_authenticated/instructor/attendance'
     | '/_authenticated/instructor/classes'
+    | '/_authenticated/instructor/students'
     | '/_authenticated/instructor/techniques'
     | '/_authenticated/student/championships'
     | '/_authenticated/student/classes'
@@ -361,6 +374,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInstructorTechniquesRouteImport
       parentRoute: typeof AuthenticatedInstructorRoute
     }
+    '/_authenticated/instructor/students': {
+      id: '/_authenticated/instructor/students'
+      path: '/students'
+      fullPath: '/instructor/students'
+      preLoaderRoute: typeof AuthenticatedInstructorStudentsRouteImport
+      parentRoute: typeof AuthenticatedInstructorRoute
+    }
     '/_authenticated/instructor/classes': {
       id: '/_authenticated/instructor/classes'
       path: '/classes'
@@ -419,6 +439,7 @@ const AuthenticatedAdminRouteWithChildren =
 interface AuthenticatedInstructorRouteChildren {
   AuthenticatedInstructorAttendanceRoute: typeof AuthenticatedInstructorAttendanceRoute
   AuthenticatedInstructorClassesRoute: typeof AuthenticatedInstructorClassesRoute
+  AuthenticatedInstructorStudentsRoute: typeof AuthenticatedInstructorStudentsRoute
   AuthenticatedInstructorTechniquesRoute: typeof AuthenticatedInstructorTechniquesRoute
   AuthenticatedInstructorIndexRoute: typeof AuthenticatedInstructorIndexRoute
 }
@@ -428,6 +449,7 @@ const AuthenticatedInstructorRouteChildren: AuthenticatedInstructorRouteChildren
     AuthenticatedInstructorAttendanceRoute:
       AuthenticatedInstructorAttendanceRoute,
     AuthenticatedInstructorClassesRoute: AuthenticatedInstructorClassesRoute,
+    AuthenticatedInstructorStudentsRoute: AuthenticatedInstructorStudentsRoute,
     AuthenticatedInstructorTechniquesRoute:
       AuthenticatedInstructorTechniquesRoute,
     AuthenticatedInstructorIndexRoute: AuthenticatedInstructorIndexRoute,
@@ -482,3 +504,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
