@@ -2,12 +2,13 @@ import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { BrandLogo } from "@/components/BrandLogo";
 import { BottomTabs, type TabItem } from "@/components/BottomTabs";
-import { LogOut, LayoutDashboard, CalendarDays, ClipboardCheck, Sparkles } from "lucide-react";
+import { LogOut, LayoutDashboard, CalendarDays, ClipboardCheck, Sparkles, Users } from "lucide-react";
 
 const TABS: TabItem[] = [
   { to: "/instructor", label: "Inicio", icon: LayoutDashboard },
   { to: "/instructor/classes", label: "Clases", icon: CalendarDays },
-  { to: "/instructor/attendance", label: "Asistencia", icon: ClipboardCheck },
+  { to: "/instructor/students", label: "Alumnos", icon: Users },
+  { to: "/instructor/attendance", label: "Asist.", icon: ClipboardCheck },
   { to: "/instructor/techniques", label: "Técnicas", icon: Sparkles },
 ];
 
