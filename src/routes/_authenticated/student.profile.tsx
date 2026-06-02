@@ -61,14 +61,17 @@ function ProfilePage() {
 
   const uploadAvatar = useMutation({
     mutationFn: async (file: File) => {
-      const path = `${userId}/avatar-${Date.now()}`;
-      const up = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      const { compressImage } = await import("@/lib/image-compress");
+      const compressed = await compressImage(file, 512, 0.7);
+      const path = `${userId}/avatar-${Date.now()}.jpg`;
+      const up = await supabase.storage.from("avatars").upload(path, compressed, { upsert: true, contentType: "image/jpeg" });
       if (up.error) throw up.error;
       const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-      const { error } = await supabase.from("profiles").update({ avatar_url: data.publicUrl }).eq("id", userId);
+      const url = `${data.publicUrl}?v=${Date.now()}`;
+      const { error } = await supabase.from("profiles").update({ avatar_url: url }).eq("id", userId);
       if (error) throw error;
     },
-    onSuccess: () => { toast.success("Avatar actualizado"); qc.invalidateQueries({ queryKey: ["profile-full"] }); },
+    onSuccess: () => { toast.success("Avatar actualizado"); qc.invalidateQueries({ queryKey: ["profile-full"] }); qc.invalidateQueries({ queryKey: ["profile"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 
