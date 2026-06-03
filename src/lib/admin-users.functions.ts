@@ -13,6 +13,10 @@ const CreateInput = z.object({
   role: z.enum(roles),
   beltRank: z.enum(belts).optional(),
   branchId: z.string().uuid().nullable().optional(),
+  // Student-specific historical data
+  joinDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  initialClassesAttended: z.number().int().min(0).max(100000).optional(),
+  initialTrainingHours: z.number().min(0).max(1000000).optional(),
   // Optional history when creating instructor accounts
   totalClassesTaught: z.number().int().min(0).max(100000).optional(),
   totalHoursTaught: z.number().min(0).max(1000000).optional(),
