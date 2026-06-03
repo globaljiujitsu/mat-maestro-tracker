@@ -33,7 +33,13 @@ function ClassesPage() {
         .eq("status", "scheduled")
         .order("date")
         .order("time");
-      return data ?? [];
+      const rows = data ?? [];
+      const ids = Array.from(new Set(rows.map((c) => c.instructor_id).filter(Boolean)));
+      const profs = ids.length
+        ? (await supabase.from("profiles").select("id, full_name").in("id", ids)).data ?? []
+        : [];
+      const pm = new Map(profs.map((p) => [p.id, p.full_name]));
+      return rows.map((c) => ({ ...c, instructor_name: pm.get(c.instructor_id) ?? null }));
     },
   });
 
