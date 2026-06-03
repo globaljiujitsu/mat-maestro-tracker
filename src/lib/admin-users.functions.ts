@@ -77,6 +77,7 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       if (Object.keys(patch).length > 0) {
         const { error: uErr } = await supabaseAdmin.from("instructors").update(patch).eq("id", newId);
         if (uErr) throw new Error(uErr.message);
+      }
     }
 
     // Patch student initial history if provided
@@ -89,7 +90,6 @@ export const adminCreateUser = createServerFn({ method: "POST" })
         const { error: sErr } = await supabaseAdmin.from("students").update(patch).eq("id", newId);
         if (sErr) throw new Error(sErr.message);
       }
-    }
     }
 
     return { id: newId };
