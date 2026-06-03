@@ -528,6 +528,7 @@ export type Database = {
       techniques: {
         Row: {
           belt_level: Database["public"]["Enums"]["belt_rank"]
+          branch_id: string | null
           category: string
           created_at: string
           description: string | null
@@ -536,10 +537,12 @@ export type Database = {
           learning_objectives: string[] | null
           lottie_url: string | null
           title: string
+          uploaded_by: string | null
           video_url: string | null
         }
         Insert: {
           belt_level: Database["public"]["Enums"]["belt_rank"]
+          branch_id?: string | null
           category: string
           created_at?: string
           description?: string | null
@@ -548,10 +551,12 @@ export type Database = {
           learning_objectives?: string[] | null
           lottie_url?: string | null
           title: string
+          uploaded_by?: string | null
           video_url?: string | null
         }
         Update: {
           belt_level?: Database["public"]["Enums"]["belt_rank"]
+          branch_id?: string | null
           category?: string
           created_at?: string
           description?: string | null
@@ -560,6 +565,7 @@ export type Database = {
           learning_objectives?: string[] | null
           lottie_url?: string | null
           title?: string
+          uploaded_by?: string | null
           video_url?: string | null
         }
         Relationships: []
@@ -591,6 +597,7 @@ export type Database = {
     }
     Functions: {
       admin_exists: { Args: never; Returns: boolean }
+      auto_finalize_classes: { Args: never; Returns: undefined }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
