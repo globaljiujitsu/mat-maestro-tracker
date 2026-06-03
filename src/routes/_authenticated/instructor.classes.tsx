@@ -197,7 +197,8 @@ function InstructorClassesPage() {
                 </button>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
