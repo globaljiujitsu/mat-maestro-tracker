@@ -38,13 +38,12 @@ function TechniquesPage() {
   const [selected, setSelected] = useState<string | null>(null);
 
   const { data: techniques } = useQuery({
-    queryKey: ["techniques", belt],
+    queryKey: ["techniques", belt, studentBranch],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("techniques")
-        .select("*")
-        .eq("belt_level", belt)
-        .order("display_order");
+      let q = supabase.from("techniques").select("*").eq("belt_level", belt).order("display_order");
+      if (studentBranch) q = q.or(`branch_id.is.null,branch_id.eq.${studentBranch}`);
+      else q = q.is("branch_id", null);
+      const { data } = await q;
       return data ?? [];
     },
   });
