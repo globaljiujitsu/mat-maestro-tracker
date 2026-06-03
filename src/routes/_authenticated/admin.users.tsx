@@ -214,6 +214,9 @@ function CreateUserForm({
   const [yearsOfExperience, setYearsOfExperience] = useState<string>("");
   const [champs, setChamps] = useState<string>("");
   const [biography, setBiography] = useState("");
+  const [joinDate, setJoinDate] = useState<string>("");
+  const [initialClasses, setInitialClasses] = useState<string>("");
+  const [initialHours, setInitialHours] = useState<string>("");
   const [pending, setPending] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -235,11 +238,15 @@ function CreateUserForm({
             ? champs.split(",").map((s) => s.trim()).filter(Boolean)
             : undefined,
           biography: role === "instructor" && biography.trim() ? biography.trim() : undefined,
+          joinDate: role === "student" && joinDate ? joinDate : undefined,
+          initialClassesAttended: role === "student" && initialClasses ? Number(initialClasses) : undefined,
+          initialTrainingHours: role === "student" && initialHours ? Number(initialHours) : undefined,
         },
       });
       toast.success("Cuenta creada");
       setEmail(""); setPassword(""); setFullName(""); setRole("student"); setBelt("white"); setBranchId("");
       setTotalClassesTaught(""); setTotalHoursTaught(""); setYearsOfExperience(""); setChamps(""); setBiography("");
+      setJoinDate(""); setInitialClasses(""); setInitialHours("");
       onCreated();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al crear");
