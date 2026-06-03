@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { BrandLogo } from "@/components/BrandLogo";
 import { BottomTabs, type TabItem } from "@/components/BottomTabs";
 import { LogOut, LayoutDashboard, CalendarDays, ClipboardCheck, Sparkles, Users } from "lucide-react";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 const TABS: TabItem[] = [
   { to: "/instructor", label: "Inicio", icon: LayoutDashboard },
@@ -27,13 +28,16 @@ function InstructorLayout() {
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/70 backdrop-blur-xl">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3">
           <BrandLogo size="sm" />
-          <button
-            onClick={signOut}
-            aria-label="Cerrar sesión"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-foreground transition-liquid hover:border-destructive/60 hover:text-destructive"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationsBell />
+            <button
+              onClick={signOut}
+              aria-label="Cerrar sesión"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-foreground transition-liquid hover:border-destructive/60 hover:text-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-5 pb-32 pt-5">
