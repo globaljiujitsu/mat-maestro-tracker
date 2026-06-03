@@ -77,7 +77,19 @@ export const adminCreateUser = createServerFn({ method: "POST" })
       if (Object.keys(patch).length > 0) {
         const { error: uErr } = await supabaseAdmin.from("instructors").update(patch).eq("id", newId);
         if (uErr) throw new Error(uErr.message);
+    }
+
+    // Patch student initial history if provided
+    if (data.role === "student") {
+      const patch: { join_date?: string; total_classes_attended?: number; total_training_hours?: number } = {};
+      if (data.joinDate) patch.join_date = data.joinDate;
+      if (data.initialClassesAttended !== undefined) patch.total_classes_attended = data.initialClassesAttended;
+      if (data.initialTrainingHours !== undefined) patch.total_training_hours = data.initialTrainingHours;
+      if (Object.keys(patch).length > 0) {
+        const { error: sErr } = await supabaseAdmin.from("students").update(patch).eq("id", newId);
+        if (sErr) throw new Error(sErr.message);
       }
+    }
     }
 
     return { id: newId };
