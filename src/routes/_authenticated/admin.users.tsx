@@ -297,6 +297,20 @@ function CreateUserForm({
         </div>
       )}
 
+      {role === "student" && (
+        <div className="space-y-3 rounded-xl border border-border bg-background/40 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Histórico do aluno (opcional)</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="block text-xs text-muted-foreground">
+              Treina desde
+              <input type="date" value={joinDate} onChange={(e) => setJoinDate(e.target.value)} className="input-base mt-1" />
+            </label>
+            <input type="number" min={0} value={initialClasses} onChange={(e) => setInitialClasses(e.target.value)} placeholder="Clases ya hechas" className="input-base" />
+            <input type="number" min={0} step={0.5} value={initialHours} onChange={(e) => setInitialHours(e.target.value)} placeholder="Horas ya entrenadas" className="input-base" />
+          </div>
+        </div>
+      )}
+
       <button
         type="submit"
         disabled={pending}
