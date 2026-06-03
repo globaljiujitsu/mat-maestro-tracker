@@ -214,6 +214,9 @@ function CreateUserForm({
   const [yearsOfExperience, setYearsOfExperience] = useState<string>("");
   const [champs, setChamps] = useState<string>("");
   const [biography, setBiography] = useState("");
+  const [joinDate, setJoinDate] = useState<string>("");
+  const [initialClasses, setInitialClasses] = useState<string>("");
+  const [initialHours, setInitialHours] = useState<string>("");
   const [pending, setPending] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -235,11 +238,15 @@ function CreateUserForm({
             ? champs.split(",").map((s) => s.trim()).filter(Boolean)
             : undefined,
           biography: role === "instructor" && biography.trim() ? biography.trim() : undefined,
+          joinDate: role === "student" && joinDate ? joinDate : undefined,
+          initialClassesAttended: role === "student" && initialClasses ? Number(initialClasses) : undefined,
+          initialTrainingHours: role === "student" && initialHours ? Number(initialHours) : undefined,
         },
       });
       toast.success("Cuenta creada");
       setEmail(""); setPassword(""); setFullName(""); setRole("student"); setBelt("white"); setBranchId("");
       setTotalClassesTaught(""); setTotalHoursTaught(""); setYearsOfExperience(""); setChamps(""); setBiography("");
+      setJoinDate(""); setInitialClasses(""); setInitialHours("");
       onCreated();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al crear");
@@ -287,6 +294,20 @@ function CreateUserForm({
           </div>
           <input value={champs} onChange={(e) => setChamps(e.target.value)} placeholder="Campeonatos (separar por coma)" className="input-base" />
           <textarea value={biography} onChange={(e) => setBiography(e.target.value)} placeholder="Biografía (opcional)" className="input-base min-h-[64px] resize-none" />
+        </div>
+      )}
+
+      {role === "student" && (
+        <div className="space-y-3 rounded-xl border border-border bg-background/40 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-primary">Histórico do aluno (opcional)</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="block text-xs text-muted-foreground">
+              Treina desde
+              <input type="date" value={joinDate} onChange={(e) => setJoinDate(e.target.value)} className="input-base mt-1" />
+            </label>
+            <input type="number" min={0} value={initialClasses} onChange={(e) => setInitialClasses(e.target.value)} placeholder="Clases ya hechas" className="input-base" />
+            <input type="number" min={0} step={0.5} value={initialHours} onChange={(e) => setInitialHours(e.target.value)} placeholder="Horas ya entrenadas" className="input-base" />
+          </div>
         </div>
       )}
 

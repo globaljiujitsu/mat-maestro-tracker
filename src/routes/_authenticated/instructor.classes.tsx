@@ -170,13 +170,21 @@ function InstructorClassesPage() {
         <EmptyState icon={CalendarDays} title="Sin clases creadas" description="Crea tu primera clase con el botón Nueva." />
       ) : (
         <ul className="space-y-2.5">
-          {classes!.map((c) => (
+          {classes!.map((c) => {
+            const endTs = new Date(`${c.date}T${c.time}`).getTime() + (c.duration_hours ?? 1.5) * 3600 * 1000;
+            const finished = c.status === "completed" || endTs < Date.now();
+            return (
             <li key={c.id} className="rounded-2xl border border-border bg-surface p-4 shadow-elevated">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                    {format(parseISO(c.date), "EEE d MMM yyyy", { locale: es })} · {c.time.slice(0, 5)}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                      {format(parseISO(c.date), "EEE d MMM yyyy", { locale: es })} · {c.time.slice(0, 5)}
+                    </p>
+                    {finished && (
+                      <span className="rounded-full bg-success/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-success">Finalizada</span>
+                    )}
+                  </div>
                   <p className="mt-1 font-display font-semibold text-foreground">{c.title}</p>
                   <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{c.branches?.name ?? "—"}</span>
@@ -189,7 +197,8 @@ function InstructorClassesPage() {
                 </button>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>

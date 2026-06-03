@@ -2,7 +2,8 @@ import { createFileRoute, Navigate, Outlet } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { BrandLogo } from "@/components/BrandLogo";
 import { BottomTabs, type TabItem } from "@/components/BottomTabs";
-import { Bell, LogOut, Home, CalendarDays, BookOpen, Trophy, User } from "lucide-react";
+import { LogOut, Home, CalendarDays, BookOpen, Trophy, User } from "lucide-react";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 const TABS: TabItem[] = [
   { to: "/student", label: "Inicio", icon: Home },
@@ -29,12 +30,7 @@ function StudentLayout() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3">
           <BrandLogo size="sm" />
           <div className="flex items-center gap-2">
-            <button
-              aria-label="Notificaciones"
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-surface text-foreground transition-liquid hover:border-primary/50"
-            >
-              <Bell className="h-4 w-4" />
-            </button>
+            <NotificationsBell />
             <button
               onClick={signOut}
               aria-label="Cerrar sesión"

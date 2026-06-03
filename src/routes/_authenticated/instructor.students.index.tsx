@@ -6,7 +6,7 @@ import { Users, Loader2, ChevronRight, Search } from "lucide-react";
 import { BeltBadge } from "@/components/BeltBadge";
 import { useState, useMemo } from "react";
 
-export const Route = createFileRoute("/_authenticated/instructor/students")({
+export const Route = createFileRoute("/_authenticated/instructor/students/")({
   component: InstructorStudents,
 });
 

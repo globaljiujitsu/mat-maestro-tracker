@@ -33,7 +33,13 @@ function ClassesPage() {
         .eq("status", "scheduled")
         .order("date")
         .order("time");
-      return data ?? [];
+      const rows = data ?? [];
+      const ids = Array.from(new Set(rows.map((c) => c.instructor_id).filter(Boolean)));
+      const profs = ids.length
+        ? (await supabase.from("profiles").select("id, full_name").in("id", ids)).data ?? []
+        : [];
+      const pm = new Map(profs.map((p) => [p.id, p.full_name]));
+      return rows.map((c) => ({ ...c, instructor_name: pm.get(c.instructor_id) ?? null }));
     },
   });
 
@@ -139,6 +145,9 @@ function ClassesPage() {
                 </div>
                 <div className="p-4">
                   <p className="font-display text-lg font-semibold text-foreground">{c.title}</p>
+                  {c.instructor_name && (
+                    <p className="mt-0.5 text-xs text-primary">Prof. {c.instructor_name}</p>
+                  )}
                   {c.description && <p className="mt-1 text-sm text-muted-foreground">{c.description}</p>}
                   <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{c.branches?.name ?? "—"}</span>

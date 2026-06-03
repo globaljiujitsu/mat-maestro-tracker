@@ -22,12 +22,13 @@ function TechniquesPage() {
     queryKey: ["student-belt", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data } = await supabase.from("students").select("belt_rank").eq("id", userId).maybeSingle();
+      const { data } = await supabase.from("students").select("belt_rank, branch_id").eq("id", userId).maybeSingle();
       return data;
     },
   });
 
   const studentBelt = (student?.belt_rank as Belt | undefined) ?? "white";
+  const studentBranch = student?.branch_id ?? null;
   const allowedBelts = useMemo(() => {
     const idx = BELT_ORDER.indexOf(studentBelt);
     return BELT_ORDER.slice(0, idx + 1);
@@ -37,13 +38,12 @@ function TechniquesPage() {
   const [selected, setSelected] = useState<string | null>(null);
 
   const { data: techniques } = useQuery({
-    queryKey: ["techniques", belt],
+    queryKey: ["techniques", belt, studentBranch],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("techniques")
-        .select("*")
-        .eq("belt_level", belt)
-        .order("display_order");
+      let q = supabase.from("techniques").select("*").eq("belt_level", belt).order("display_order");
+      if (studentBranch) q = q.or(`branch_id.is.null,branch_id.eq.${studentBranch}`);
+      else q = q.is("branch_id", null);
+      const { data } = await q;
       return data ?? [];
     },
   });
