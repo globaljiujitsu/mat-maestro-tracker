@@ -149,11 +149,9 @@ function MonthlyTopFive({ userId, branchId }: { userId: string; branchId: string
   const { data: top } = useQuery({
     queryKey: ["monthly-top", monthIso, branchId],
     queryFn: async () => {
-      const { data } = await supabase.rpc("monthly_top_students", {
-        _month: monthIso,
-        _branch_id: branchId,
-        _limit: 5,
-      });
+      const args: { _month: string; _limit: number; _branch_id?: string } = { _month: monthIso, _limit: 5 };
+      if (branchId) args._branch_id = branchId;
+      const { data } = await supabase.rpc("monthly_top_students", args);
       return data ?? [];
     },
   });
