@@ -103,6 +103,9 @@ function InstructorStudentDetail() {
         </div>
       </section>
 
+      <TechniqueEvaluator studentId={studentId} branchId={student?.branch_id ?? null} beltRank={(student?.belt_rank as string) ?? "white"} />
+
+
       <section className="rounded-3xl border border-border bg-surface p-5 shadow-elevated">
         <div className="mb-3 flex items-center gap-2">
           <Activity className="h-4 w-4 text-primary" />
