@@ -1,10 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Loader2, Trophy, BookOpen, Activity, CalendarDays, Medal } from "lucide-react";
+import { ArrowLeft, Loader2, Trophy, BookOpen, Activity, CalendarDays, Medal, CheckCircle2, Clock, Circle } from "lucide-react";
 import { BeltBadge } from "@/components/BeltBadge";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/instructor/students/$studentId")({
   component: InstructorStudentDetail,
