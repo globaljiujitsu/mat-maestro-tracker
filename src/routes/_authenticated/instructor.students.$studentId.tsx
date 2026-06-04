@@ -190,7 +190,7 @@ function TechniqueEvaluator({ studentId, branchId, beltRank }: { studentId: stri
   const { data: techniques } = useQuery({
     queryKey: ["eval-techniques", branchId, allowed.join(",")],
     queryFn: async () => {
-      let q = supabase.from("techniques").select("id, title, category, belt_level").in("belt_level", allowed as unknown as string[]).order("belt_level").order("display_order");
+      let q = supabase.from("techniques").select("id, title, category, belt_level").in("belt_level", allowed as unknown as ("white"|"blue"|"purple"|"brown"|"black")[]).order("belt_level").order("display_order");
       if (branchId) q = q.or(`branch_id.is.null,branch_id.eq.${branchId}`);
       else q = q.is("branch_id", null);
       const { data } = await q;
