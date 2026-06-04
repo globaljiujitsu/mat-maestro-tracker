@@ -29,6 +29,7 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminChampionshipsRouteImport } from './routes/_authenticated/admin.championships'
 import { Route as AuthenticatedAdminBranchesRouteImport } from './routes/_authenticated/admin.branches'
 import { Route as AuthenticatedInstructorStudentsIndexRouteImport } from './routes/_authenticated/instructor.students.index'
+import { Route as ApiPublicHooksStudentOfMonthRouteImport } from './routes/api/public/hooks/student-of-month'
 import { Route as AuthenticatedInstructorStudentsStudentIdRouteImport } from './routes/_authenticated/instructor.students.$studentId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -142,6 +143,12 @@ const AuthenticatedInstructorStudentsIndexRoute =
     path: '/students/',
     getParentRoute: () => AuthenticatedInstructorRoute,
   } as any)
+const ApiPublicHooksStudentOfMonthRoute =
+  ApiPublicHooksStudentOfMonthRouteImport.update({
+    id: '/api/public/hooks/student-of-month',
+    path: '/api/public/hooks/student-of-month',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedInstructorStudentsStudentIdRoute =
   AuthenticatedInstructorStudentsStudentIdRouteImport.update({
     id: '/students/$studentId',
@@ -169,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/instructor/': typeof AuthenticatedInstructorIndexRoute
   '/student/': typeof AuthenticatedStudentIndexRoute
   '/instructor/students/$studentId': typeof AuthenticatedInstructorStudentsStudentIdRoute
+  '/api/public/hooks/student-of-month': typeof ApiPublicHooksStudentOfMonthRoute
   '/instructor/students/': typeof AuthenticatedInstructorStudentsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -188,6 +196,7 @@ export interface FileRoutesByTo {
   '/instructor': typeof AuthenticatedInstructorIndexRoute
   '/student': typeof AuthenticatedStudentIndexRoute
   '/instructor/students/$studentId': typeof AuthenticatedInstructorStudentsStudentIdRoute
+  '/api/public/hooks/student-of-month': typeof ApiPublicHooksStudentOfMonthRoute
   '/instructor/students': typeof AuthenticatedInstructorStudentsIndexRoute
 }
 export interface FileRoutesById {
@@ -212,6 +221,7 @@ export interface FileRoutesById {
   '/_authenticated/instructor/': typeof AuthenticatedInstructorIndexRoute
   '/_authenticated/student/': typeof AuthenticatedStudentIndexRoute
   '/_authenticated/instructor/students/$studentId': typeof AuthenticatedInstructorStudentsStudentIdRoute
+  '/api/public/hooks/student-of-month': typeof ApiPublicHooksStudentOfMonthRoute
   '/_authenticated/instructor/students/': typeof AuthenticatedInstructorStudentsIndexRoute
 }
 export interface FileRouteTypes {
@@ -236,6 +246,7 @@ export interface FileRouteTypes {
     | '/instructor/'
     | '/student/'
     | '/instructor/students/$studentId'
+    | '/api/public/hooks/student-of-month'
     | '/instructor/students/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/instructor'
     | '/student'
     | '/instructor/students/$studentId'
+    | '/api/public/hooks/student-of-month'
     | '/instructor/students'
   id:
     | '__root__'
@@ -278,6 +290,7 @@ export interface FileRouteTypes {
     | '/_authenticated/instructor/'
     | '/_authenticated/student/'
     | '/_authenticated/instructor/students/$studentId'
+    | '/api/public/hooks/student-of-month'
     | '/_authenticated/instructor/students/'
   fileRoutesById: FileRoutesById
 }
@@ -285,6 +298,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiPublicHooksStudentOfMonthRoute: typeof ApiPublicHooksStudentOfMonthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -429,6 +443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInstructorStudentsIndexRouteImport
       parentRoute: typeof AuthenticatedInstructorRoute
     }
+    '/api/public/hooks/student-of-month': {
+      id: '/api/public/hooks/student-of-month'
+      path: '/api/public/hooks/student-of-month'
+      fullPath: '/api/public/hooks/student-of-month'
+      preLoaderRoute: typeof ApiPublicHooksStudentOfMonthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/instructor/students/$studentId': {
       id: '/_authenticated/instructor/students/$studentId'
       path: '/students/$studentId'
@@ -524,7 +545,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiPublicHooksStudentOfMonthRoute: ApiPublicHooksStudentOfMonthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
