@@ -125,6 +125,8 @@ function StudentHome() {
         )}
       </section>
 
+      <MonthlyTopFive userId={userId} branchId={student?.branch_id ?? null} />
+
       <section className="rounded-3xl border border-border bg-gradient-to-br from-surface to-surface-elevated p-6 shadow-elevated">
         <div className="mb-3 flex items-center gap-2 text-primary">
           <Flame className="h-4 w-4" />
@@ -132,10 +134,55 @@ function StudentHome() {
         </div>
         <p className="font-display text-lg font-bold text-foreground">Compite por el primer puesto</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Asiste a más clases y sube en el ranking de tu sucursal. El estudiante #1 al final del mes recibe un certificado oficial.
+          Asiste a más clases y sube en el ranking de tu sucursal. El estudiante #1 al cierre del mes recibe un certificado oficial automáticamente.
         </p>
       </section>
     </div>
+  );
+}
+
+function MonthlyTopFive({ userId, branchId }: { userId: string; branchId: string | null }) {
+  const monthStart = new Date();
+  monthStart.setDate(1);
+  const monthIso = monthStart.toISOString().slice(0, 10);
+
+  const { data: top } = useQuery({
+    queryKey: ["monthly-top", monthIso, branchId],
+    queryFn: async () => {
+      const args: { _month: string; _limit: number; _branch_id?: string } = { _month: monthIso, _limit: 5 };
+      if (branchId) args._branch_id = branchId;
+      const { data } = await supabase.rpc("monthly_top_students", args);
+      return data ?? [];
+    },
+  });
+
+  return (
+    <section>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="font-display text-lg font-semibold text-foreground">Top 5 del mes</h2>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{format(monthStart, "MMMM yyyy", { locale: es })}</span>
+      </div>
+      {!top || top.length === 0 ? (
+        <EmptyState icon={Trophy} title="Sin datos aún" description="Marca presencia en clase para entrar al ranking." />
+      ) : (
+        <ol className="space-y-2">
+          {top.map((r: any, i: number) => {
+            const isMe = r.student_id === userId;
+            return (
+              <li key={r.student_id} className={`flex items-center gap-3 rounded-2xl border p-3 ${isMe ? "border-primary bg-primary/10" : "border-border bg-surface"}`}>
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-display text-sm font-bold ${i === 0 ? "bg-gradient-gold text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-foreground">{r.full_name ?? "Atleta"}{isMe ? " (tú)" : ""}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{Number(r.hours).toFixed(1)} h · {r.classes_count} clases</p>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </section>
   );
 }
 

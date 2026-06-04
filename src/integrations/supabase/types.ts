@@ -609,6 +609,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      monthly_top_students: {
+        Args: { _branch_id?: string; _limit?: number; _month: string }
+        Returns: {
+          avatar_url: string
+          branch_id: string
+          branch_name: string
+          classes_count: number
+          full_name: string
+          hours: number
+          student_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "instructor" | "student"
