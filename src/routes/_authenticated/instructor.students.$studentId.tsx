@@ -177,3 +177,85 @@ function Tile({ label, value, tone }: { label: string; value: number; tone: "suc
     </div>
   );
 }
+
+const BELT_ORDER = ["white", "blue", "purple", "brown", "black"] as const;
+type TStatus = "not_evaluated" | "in_progress" | "mastered";
+const NEXT: Record<TStatus, TStatus> = { not_evaluated: "in_progress", in_progress: "mastered", mastered: "not_evaluated" };
+
+function TechniqueEvaluator({ studentId, branchId, beltRank }: { studentId: string; branchId: string | null; beltRank: string }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const allowed = BELT_ORDER.slice(0, BELT_ORDER.indexOf(beltRank as "white") + 1);
+
+  const { data: techniques } = useQuery({
+    queryKey: ["eval-techniques", branchId, allowed.join(",")],
+    queryFn: async () => {
+      let q = supabase.from("techniques").select("id, title, category, belt_level").in("belt_level", allowed as unknown as string[]).order("belt_level").order("display_order");
+      if (branchId) q = q.or(`branch_id.is.null,branch_id.eq.${branchId}`);
+      else q = q.is("branch_id", null);
+      const { data } = await q;
+      return data ?? [];
+    },
+  });
+
+  const { data: progress } = useQuery({
+    queryKey: ["eval-progress", studentId],
+    queryFn: async () => {
+      const { data } = await supabase.from("technique_progress").select("technique_id, status").eq("student_id", studentId);
+      return new Map<string, TStatus>((data ?? []).map((p) => [p.technique_id, p.status as TStatus]));
+    },
+  });
+
+  const cycle = async (techniqueId: string, current: TStatus) => {
+    const next = NEXT[current];
+    const { error } = await supabase
+      .from("technique_progress")
+      .upsert({ student_id: studentId, technique_id: techniqueId, status: next, evaluated_by: user?.id }, { onConflict: "student_id,technique_id" });
+    if (error) {
+      // Fallback: insert/update without upsert constraint
+      const existing = progress?.get(techniqueId);
+      if (existing !== undefined) {
+        await supabase.from("technique_progress").update({ status: next, evaluated_by: user?.id }).eq("student_id", studentId).eq("technique_id", techniqueId);
+      } else {
+        await supabase.from("technique_progress").insert({ student_id: studentId, technique_id: techniqueId, status: next, evaluated_by: user?.id });
+      }
+    }
+    qc.invalidateQueries({ queryKey: ["eval-progress", studentId] });
+    qc.invalidateQueries({ queryKey: ["instructor-student-detail", studentId] });
+    toast.success(`Técnica marcada como ${next.replace("_", " ")}`);
+  };
+
+  if (!techniques || techniques.length === 0) {
+    return (
+      <section className="rounded-3xl border border-border bg-surface p-5 shadow-elevated">
+        <p className="text-xs font-bold uppercase tracking-wider text-primary">Evaluar técnicas</p>
+        <p className="mt-2 text-sm text-muted-foreground">No hay técnicas disponibles para esta faixa.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-3xl border border-border bg-surface p-5 shadow-elevated">
+      <p className="mb-3 text-xs font-bold uppercase tracking-wider text-primary">Evaluar técnicas · toca para cambiar</p>
+      <ul className="space-y-2">
+        {techniques.map((t) => {
+          const st: TStatus = progress?.get(t.id) ?? "not_evaluated";
+          const Icon = st === "mastered" ? CheckCircle2 : st === "in_progress" ? Clock : Circle;
+          const tone = st === "mastered" ? "text-success" : st === "in_progress" ? "text-primary" : "text-muted-foreground";
+          return (
+            <li key={t.id}>
+              <button onClick={() => cycle(t.id, st)} className="flex w-full items-center gap-3 rounded-2xl border border-border bg-background/40 p-3 text-left transition-liquid hover:border-primary/50">
+                <Icon className={`h-5 w-5 shrink-0 ${tone}`} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-foreground">{t.title}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{t.belt_level} · {t.category}</p>
+                </div>
+                <span className={`text-[10px] font-bold uppercase tracking-wider ${tone}`}>{st.replace("_", " ")}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
