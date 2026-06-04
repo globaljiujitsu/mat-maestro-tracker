@@ -43,7 +43,6 @@ export const runStudentOfMonth = createServerFn({ method: "POST" }).handler(asyn
 
   const { data: global } = await supabaseAdmin.rpc("monthly_top_students", {
     _month: monthIso,
-    _branch_id: null,
     _limit: 1,
   });
   const g = (global ?? [])[0] as TopRow | undefined;
