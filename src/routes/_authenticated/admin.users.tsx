@@ -69,7 +69,7 @@ function AdminUsers() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success("Faixa actualizada");
+      toast.success("Cinturón actualizado");
       qc.invalidateQueries({ queryKey: ["admin-all-users"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -164,11 +164,11 @@ function AdminUsers() {
                       onChange={(e) => updateBelt.mutate({ userId: u.id, belt: e.target.value as Belt })}
                       className="rounded-lg border border-border bg-surface-elevated px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-foreground"
                     >
-                      <option value="white">Branca</option>
+                      <option value="white">Blanco</option>
                       <option value="blue">Azul</option>
-                      <option value="purple">Roxa</option>
-                      <option value="brown">Marrom</option>
-                      <option value="black">Preta</option>
+                      <option value="purple">Morado</option>
+                      <option value="brown">Marrón</option>
+                      <option value="black">Negro</option>
                     </select>
                   )}
                   <button
@@ -269,11 +269,11 @@ function CreateUserForm({
         </select>
         {role !== "admin" && (
           <select value={belt} onChange={(e) => setBelt(e.target.value as Belt)} className="input-base">
-            <option value="white">Faixa Branca</option>
-            <option value="blue">Faixa Azul</option>
-            <option value="purple">Faixa Roxa</option>
-            <option value="brown">Faixa Marrom</option>
-            <option value="black">Faixa Preta</option>
+            <option value="white">Cinturón Blanco</option>
+            <option value="blue">Cinturón Azul</option>
+            <option value="purple">Cinturón Morado</option>
+            <option value="brown">Cinturón Marrón</option>
+            <option value="black">Cinturón Negro</option>
           </select>
         )}
         <select value={branchId} onChange={(e) => setBranchId(e.target.value)} className="input-base">

@@ -229,7 +229,7 @@ function TechniqueEvaluator({ studentId, branchId, beltRank }: { studentId: stri
     return (
       <section className="rounded-3xl border border-border bg-surface p-5 shadow-elevated">
         <p className="text-xs font-bold uppercase tracking-wider text-primary">Evaluar técnicas</p>
-        <p className="mt-2 text-sm text-muted-foreground">No hay técnicas disponibles para esta faixa.</p>
+        <p className="mt-2 text-sm text-muted-foreground">No hay técnicas disponibles para este cinturón.</p>
       </section>
     );
   }
