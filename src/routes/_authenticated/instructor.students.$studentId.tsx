@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Loader2, Trophy, BookOpen, Activity, CalendarDays, Medal, CheckCircle2, Clock, Circle } from "lucide-react";
+import { ArrowLeft, Loader2, Trophy, BookOpen, Activity, CalendarDays, Medal, CheckCircle2, Clock, Circle, Award } from "lucide-react";
 import { BeltBadge } from "@/components/BeltBadge";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -103,7 +103,11 @@ function InstructorStudentDetail() {
         </div>
       </section>
 
+      <BeltPromotion studentId={studentId} currentBelt={(student?.belt_rank as Belt) ?? "white"} />
+
       <TechniqueEvaluator studentId={studentId} branchId={student?.branch_id ?? null} beltRank={(student?.belt_rank as string) ?? "white"} />
+
+
 
 
       <section className="rounded-3xl border border-border bg-surface p-5 shadow-elevated">
