@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Loader2, Trophy, BookOpen, Activity, CalendarDays, Medal, CheckCircle2, Clock, Circle } from "lucide-react";
+import { ArrowLeft, Loader2, Trophy, BookOpen, Activity, CalendarDays, Medal, CheckCircle2, Clock, Circle, Award } from "lucide-react";
 import { BeltBadge } from "@/components/BeltBadge";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -103,7 +103,11 @@ function InstructorStudentDetail() {
         </div>
       </section>
 
+      <BeltPromotion studentId={studentId} currentBelt={(student?.belt_rank as Belt) ?? "white"} />
+
       <TechniqueEvaluator studentId={studentId} branchId={student?.branch_id ?? null} beltRank={(student?.belt_rank as string) ?? "white"} />
+
+
 
 
       <section className="rounded-3xl border border-border bg-surface p-5 shadow-elevated">
@@ -229,7 +233,7 @@ function TechniqueEvaluator({ studentId, branchId, beltRank }: { studentId: stri
     return (
       <section className="rounded-3xl border border-border bg-surface p-5 shadow-elevated">
         <p className="text-xs font-bold uppercase tracking-wider text-primary">Evaluar técnicas</p>
-        <p className="mt-2 text-sm text-muted-foreground">No hay técnicas disponibles para esta faixa.</p>
+        <p className="mt-2 text-sm text-muted-foreground">No hay técnicas disponibles para este cinturón.</p>
       </section>
     );
   }
@@ -256,6 +260,90 @@ function TechniqueEvaluator({ studentId, branchId, beltRank }: { studentId: stri
           );
         })}
       </ul>
+    </section>
+  );
+}
+
+type Belt = "white" | "blue" | "purple" | "brown" | "black";
+const BELTS: Belt[] = ["white", "blue", "purple", "brown", "black"];
+const BELT_LABEL: Record<Belt, string> = {
+  white: "Blanco",
+  blue: "Azul",
+  purple: "Morado",
+  brown: "Marrón",
+  black: "Negro",
+};
+
+function BeltPromotion({ studentId, currentBelt }: { studentId: string; currentBelt: Belt }) {
+  const { user } = useAuth();
+  const userId = user?.id ?? "";
+  const qc = useQueryClient();
+
+  const { data: myInstructor } = useQuery({
+    queryKey: ["me-instructor-belt", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data } = await supabase.from("instructors").select("belt_rank").eq("id", userId).maybeSingle();
+      return data;
+    },
+  });
+
+  const isBlackBelt = myInstructor?.belt_rank === "black";
+  if (!isBlackBelt) return null;
+
+  const currentIdx = BELTS.indexOf(currentBelt);
+  const nextBelt = currentIdx < BELTS.length - 1 ? BELTS[currentIdx + 1] : null;
+
+  const promote = async (target: Belt) => {
+    if (!confirm(`¿Graduar al atleta a cinturón ${BELT_LABEL[target]}?`)) return;
+    const { error } = await supabase.from("students").update({ belt_rank: target }).eq("id", studentId);
+    if (error) return toast.error(error.message);
+    await supabase.from("notifications").insert({
+      user_id: studentId,
+      title: "¡Felicitaciones!",
+      body: `Has sido graduado a cinturón ${BELT_LABEL[target]}.`,
+    });
+    toast.success(`Atleta graduado a cinturón ${BELT_LABEL[target]}`);
+    qc.invalidateQueries({ queryKey: ["instructor-student-detail", studentId] });
+  };
+
+  return (
+    <section className="rounded-3xl border border-primary/40 bg-gradient-to-br from-primary/10 to-transparent p-5 shadow-elevated">
+      <div className="mb-3 flex items-center gap-2">
+        <Award className="h-4 w-4 text-primary" />
+        <p className="text-xs font-bold uppercase tracking-wider text-primary">Graduación de cinturón</p>
+      </div>
+      <p className="mb-3 text-xs text-muted-foreground">
+        Como cinturón negro, puedes actualizar el cinturón del atleta. Cambia con cuidado: el atleta recibirá una notificación.
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Actual:</span>
+        <BeltBadge belt={currentBelt} />
+        {nextBelt && (
+          <button
+            onClick={() => promote(nextBelt)}
+            className="ml-auto rounded-lg bg-gradient-gold px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-gold"
+          >
+            Subir a {BELT_LABEL[nextBelt]} →
+          </button>
+        )}
+      </div>
+      <div className="mt-3 grid grid-cols-5 gap-1.5">
+        {BELTS.map((b) => (
+          <button
+            key={b}
+            onClick={() => b !== currentBelt && promote(b)}
+            disabled={b === currentBelt}
+            className={`rounded-lg border px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-liquid ${
+              b === currentBelt
+                ? "border-primary bg-primary/20 text-primary"
+                : "border-border text-muted-foreground hover:border-primary/60 hover:text-primary"
+            }`}
+          >
+            {BELT_LABEL[b]}
+          </button>
+        ))}
+      </div>
     </section>
   );
 }

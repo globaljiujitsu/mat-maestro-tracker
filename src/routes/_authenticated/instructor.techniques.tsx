@@ -3,56 +3,63 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "@/components/EmptyState";
-import { Sparkles, Loader2, Users, Plus, Trash2 } from "lucide-react";
+import { Sparkles, PlayCircle, Save, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { BeltBadge } from "@/components/BeltBadge";
 
-type TechStatus = "not_evaluated" | "in_progress" | "mastered";
 type Belt = "white" | "blue" | "purple" | "brown" | "black";
-
-const STATUSES: { v: TechStatus; label: string; cls: string }[] = [
-  { v: "not_evaluated", label: "Pendiente", cls: "border-border text-muted-foreground" },
-  { v: "in_progress", label: "Aprendiendo", cls: "border-primary/40 text-primary bg-primary/10" },
-  { v: "mastered", label: "Dominado", cls: "border-success/40 text-success bg-success/10" },
-];
+const BELTS: Belt[] = ["white", "blue", "purple", "brown", "black"];
 
 export const Route = createFileRoute("/_authenticated/instructor/techniques")({
-  component: TechniquesEval,
+  component: TechniquesLibrary,
 });
 
-function TechniquesEval() {
+/** Convert any Google Drive share URL into an embeddable preview URL. */
+function toEmbedUrl(raw: string): string {
+  const s = raw.trim();
+  if (!s) return "";
+  // Google Drive: file/d/{id}/view  or  open?id={id}
+  const driveFile = s.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (driveFile) return `https://drive.google.com/file/d/${driveFile[1]}/preview`;
+  const driveOpen = s.match(/drive\.google\.com\/open\?id=([^&]+)/);
+  if (driveOpen) return `https://drive.google.com/file/d/${driveOpen[1]}/preview`;
+  // YouTube short / watch — keep working
+  const ytWatch = s.match(/youtube\.com\/watch\?v=([^&]+)/);
+  if (ytWatch) return `https://www.youtube.com/embed/${ytWatch[1]}`;
+  const ytShort = s.match(/youtu\.be\/([^?]+)/);
+  if (ytShort) return `https://www.youtube.com/embed/${ytShort[1]}`;
+  return s;
+}
+
+function TechniquesLibrary() {
   const { user } = useAuth();
   const userId = user?.id ?? "";
   const qc = useQueryClient();
-  const [studentId, setStudentId] = useState<string | null>(null);
-  const [tab, setTab] = useState<"eval" | "library">("eval");
+  const [belt, setBelt] = useState<Belt>("white");
 
   const { data: me } = useQuery({
     queryKey: ["me-instructor", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data } = await supabase.from("instructors").select("branch_id, branches(name)").eq("id", userId).maybeSingle();
+      const { data } = await supabase
+        .from("instructors")
+        .select("branch_id, branches(name)")
+        .eq("id", userId)
+        .maybeSingle();
       return data;
     },
   });
   const myBranchId = me?.branch_id ?? null;
 
-  const { data: students } = useQuery({
-    queryKey: ["all-students", myBranchId],
+  const { data: techniques, isLoading } = useQuery({
+    queryKey: ["techniques-library", myBranchId, belt],
     queryFn: async () => {
-      let q = supabase.from("students").select("id, belt_rank, branch_id, profiles:id(full_name)").eq("is_active", true);
-      if (myBranchId) q = q.eq("branch_id", myBranchId);
-      const { data } = await q.order("created_at", { ascending: false }).limit(200);
-      return data ?? [];
-    },
-  });
-
-  const { data: techniques } = useQuery({
-    queryKey: ["techniques-instructor", myBranchId],
-    queryFn: async () => {
-      // Show global (branch_id IS NULL) + own branch techniques
-      let q = supabase.from("techniques").select("*").order("belt_level").order("display_order");
+      let q = supabase
+        .from("techniques")
+        .select("id, title, category, belt_level, description, video_url, branch_id")
+        .eq("belt_level", belt)
+        .order("display_order");
       if (myBranchId) q = q.or(`branch_id.is.null,branch_id.eq.${myBranchId}`);
       else q = q.is("branch_id", null);
       const { data } = await q;
@@ -60,248 +67,176 @@ function TechniquesEval() {
     },
   });
 
-  const { data: progress, isLoading } = useQuery({
-    queryKey: ["student-progress", studentId],
-    enabled: !!studentId,
-    queryFn: async () => {
-      const { data } = await supabase
-        .from("technique_progress")
-        .select("id, technique_id, status")
-        .eq("student_id", studentId!);
-      return data ?? [];
-    },
-  });
-
-  const progressMap = new Map(progress?.map((p) => [p.technique_id, p]));
-
-  const setStatus = useMutation({
-    mutationFn: async ({ techId, status }: { techId: string; status: TechStatus }) => {
-      const existing = progressMap.get(techId);
-      if (existing) {
-        const { error } = await supabase
-          .from("technique_progress")
-          .update({ status, evaluated_by: userId })
-          .eq("id", existing.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("technique_progress").insert({
-          student_id: studentId!,
-          technique_id: techId,
-          status,
-          evaluated_by: userId,
-        });
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["student-progress", studentId] }),
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const list = useMemo(() => techniques ?? [], [techniques]);
 
   return (
     <div className="space-y-5">
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Técnicas</p>
-        <h1 className="mt-1 font-display text-3xl font-bold text-foreground">
-          {tab === "eval" ? "Evaluación" : "Biblioteca"}
-        </h1>
+        <h1 className="mt-1 font-display text-3xl font-bold text-foreground">Biblioteca</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Cambia o sube el video de cada técnica desde tu Google Drive. La técnica se mantiene; solo se actualiza el video que verán los alumnos.
+        </p>
         {me?.branches?.name && (
-          <p className="mt-1 text-xs text-muted-foreground">Sucursal: <span className="font-bold text-primary">{me.branches.name}</span></p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Sucursal: <span className="font-bold text-primary">{me.branches.name}</span>
+          </p>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 rounded-2xl border border-border bg-surface p-1">
-        {(["eval", "library"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`rounded-xl py-2 text-xs font-bold uppercase tracking-wider transition-liquid ${
-              tab === t ? "bg-gradient-gold text-primary-foreground shadow-gold" : "text-muted-foreground"
-            }`}
-          >
-            {t === "eval" ? "Evaluar atletas" : "Mi biblioteca"}
-          </button>
-        ))}
+      <div className="-mx-5 overflow-x-auto px-5">
+        <div className="flex gap-2">
+          {BELTS.map((b) => (
+            <button
+              key={b}
+              onClick={() => setBelt(b)}
+              className={`shrink-0 rounded-full border px-3 py-1.5 transition-liquid ${
+                belt === b ? "border-primary bg-primary/10" : "border-border bg-surface"
+              }`}
+            >
+              <BeltBadge belt={b} />
+            </button>
+          ))}
+        </div>
       </div>
 
-      {tab === "library" ? (
-        <LibraryEditor
-          myBranchId={myBranchId}
-          myUserId={userId}
-          techniques={techniques ?? []}
-          onChanged={() => qc.invalidateQueries({ queryKey: ["techniques-instructor"] })}
-        />
+      {isLoading ? null : list.length === 0 ? (
+        <EmptyState icon={Sparkles} title="Sin técnicas" description="No hay técnicas para este cinturón." />
       ) : (
-        <>
-          <div>
-            <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Selecciona atleta</label>
-            <select
-              value={studentId ?? ""}
-              onChange={(e) => setStudentId(e.target.value || null)}
-              className="input-base"
-            >
-              <option value="">— Elegir —</option>
-              {(students ?? []).map((s) => {
-                const name = (s.profiles as { full_name?: string } | null)?.full_name ?? "—";
-                return <option key={s.id} value={s.id}>{name} · {s.belt_rank}</option>;
-              })}
-            </select>
-          </div>
-
-          {!studentId ? (
-            <EmptyState icon={Users} title="Elige un atleta" description="Selecciona arriba para evaluar." />
-          ) : isLoading ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-          ) : (techniques ?? []).length === 0 ? (
-            <EmptyState icon={Sparkles} title="Sin técnicas" description="Crea técnicas en la pestaña Biblioteca." />
-          ) : (
-            <ul className="space-y-2.5">
-              {techniques!.map((t) => {
-                const current = progressMap.get(t.id)?.status ?? "not_evaluated";
-                return (
-                  <li key={t.id} className="rounded-2xl border border-border bg-surface p-4 shadow-elevated">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-display font-semibold text-foreground">{t.title}</p>
-                        <div className="mt-1.5 flex items-center gap-2">
-                          <BeltBadge belt={t.belt_level} />
-                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{t.category}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="mt-3 grid grid-cols-3 gap-1.5">
-                      {STATUSES.map((s) => (
-                        <button
-                          key={s.v}
-                          onClick={() => setStatus.mutate({ techId: t.id, status: s.v })}
-                          className={`rounded-lg border px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-liquid ${current === s.v ? s.cls : "border-border text-muted-foreground hover:border-primary/40"}`}
-                        >
-                          {s.label}
-                        </button>
-                      ))}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </>
+        <ul className="space-y-3">
+          {list.map((t) => (
+            <TechniqueRow
+              key={t.id}
+              technique={t}
+              onSaved={() => qc.invalidateQueries({ queryKey: ["techniques-library"] })}
+            />
+          ))}
+        </ul>
       )}
     </div>
   );
 }
 
-function LibraryEditor({
-  myBranchId,
-  myUserId,
-  techniques,
-  onChanged,
+function TechniqueRow({
+  technique,
+  onSaved,
 }: {
-  myBranchId: string | null;
-  myUserId: string;
-  techniques: { id: string; title: string; belt_level: Belt; category: string; video_url: string | null; branch_id: string | null; uploaded_by: string | null }[];
-  onChanged: () => void;
+  technique: {
+    id: string;
+    title: string;
+    category: string;
+    belt_level: Belt;
+    description: string | null;
+    video_url: string | null;
+    branch_id: string | null;
+  };
+  onSaved: () => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [belt, setBelt] = useState<Belt>("white");
-  const [category, setCategory] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [description, setDescription] = useState("");
-  const [pending, setPending] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [url, setUrl] = useState(technique.video_url ?? "");
+  const [saving, setSaving] = useState(false);
 
-  const create = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!myBranchId) {
-      toast.error("Necesitas estar asignado a una sucursal.");
-      return;
-    }
-    setPending(true);
-    const { error } = await supabase.from("techniques").insert({
-      title: title.trim(),
-      belt_level: belt,
-      category: category.trim() || "General",
-      video_url: videoUrl.trim() || null,
-      description: description.trim() || null,
-      branch_id: myBranchId,
-      uploaded_by: myUserId,
-    });
-    setPending(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Técnica creada");
-    setTitle(""); setCategory(""); setVideoUrl(""); setDescription("");
-    setOpen(false);
-    onChanged();
-  };
+  const save = useMutation({
+    mutationFn: async () => {
+      setSaving(true);
+      const embed = url ? toEmbedUrl(url) : null;
+      const { error } = await supabase
+        .from("techniques")
+        .update({ video_url: embed })
+        .eq("id", technique.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Video actualizado");
+      setEditing(false);
+      setSaving(false);
+      onSaved();
+    },
+    onError: (e: Error) => {
+      setSaving(false);
+      toast.error(e.message);
+    },
+  });
 
-  const remove = async (id: string) => {
-    if (!confirm("¿Eliminar esta técnica?")) return;
-    const { error } = await supabase.from("techniques").delete().eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Eliminada");
-    onChanged();
-  };
-
-  const mine = techniques.filter((t) => t.uploaded_by === myUserId);
-  const shared = techniques.filter((t) => t.uploaded_by !== myUserId);
+  const clear = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("techniques").update({ video_url: null }).eq("id", technique.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setUrl("");
+      toast.success("Video eliminado");
+      onSaved();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   return (
-    <div className="space-y-4">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-gold py-2.5 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-gold"
-      >
-        <Plus className="h-4 w-4" /> Nueva técnica
-      </button>
-
-      {open && (
-        <form onSubmit={create} className="space-y-3 rounded-2xl border border-primary/30 bg-surface p-4 shadow-elevated">
-          <input required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título (Armbar desde la guardia)" className="input-base" />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <select value={belt} onChange={(e) => setBelt(e.target.value as Belt)} className="input-base">
-              <option value="white">Faixa Branca</option>
-              <option value="blue">Faixa Azul</option>
-              <option value="purple">Faixa Roxa</option>
-              <option value="brown">Faixa Marrom</option>
-              <option value="black">Faixa Preta</option>
-            </select>
-            <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Categoría (Sumisión, Guardia…)" className="input-base" />
+    <li className="rounded-2xl border border-border bg-surface p-4 shadow-elevated">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="font-display font-semibold text-foreground">{technique.title}</p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <BeltBadge belt={technique.belt_level} />
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{technique.category}</span>
+            {technique.video_url && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-success">
+                <PlayCircle className="h-3 w-3" /> Con video
+              </span>
+            )}
           </div>
-          <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="YouTube embed URL (https://www.youtube.com/embed/…)" className="input-base" />
-          <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción / objetivos" className="input-base min-h-[64px] resize-none" />
-          <button disabled={pending} className="w-full rounded-xl bg-gradient-gold py-3 text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-gold disabled:opacity-60">
-            {pending ? "Guardando…" : "Crear técnica"}
-          </button>
-        </form>
+        </div>
+        <button
+          onClick={() => setEditing((v) => !v)}
+          className="rounded-lg border border-primary/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary/10"
+        >
+          {editing ? "Cerrar" : technique.video_url ? "Cambiar video" : "Subir video"}
+        </button>
+      </div>
+
+      {editing && (
+        <div className="mt-3 space-y-2 border-t border-border/60 pt-3">
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+            URL del video (Google Drive o YouTube)
+          </label>
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://drive.google.com/file/d/…/view"
+            className="input-base"
+          />
+          <p className="text-[10px] text-muted-foreground">
+            Pega el enlace de Google Drive. Asegúrate de compartir el archivo como <strong>“Cualquiera con el enlace”</strong> para que los alumnos lo vean.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => save.mutate()}
+              disabled={saving || !url.trim()}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-gold px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-primary-foreground shadow-gold disabled:opacity-60"
+            >
+              <Save className="h-3.5 w-3.5" /> Guardar
+            </button>
+            {technique.video_url && (
+              <button
+                onClick={() => clear.mutate()}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-destructive/40 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Quitar video
+              </button>
+            )}
+            {url && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-primary"
+              >
+                <ExternalLink className="h-3 w-3" /> Abrir
+              </a>
+            )}
+          </div>
+        </div>
       )}
-
-      <section>
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-primary">Mis técnicas ({mine.length})</p>
-        {mine.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Aún no has creado técnicas para tu sucursal.</p>
-        ) : (
-          <ul className="space-y-2">
-            {mine.map((t) => (
-              <li key={t.id} className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-surface p-3 shadow-elevated">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-foreground">{t.title}</p>
-                  <div className="mt-1 flex items-center gap-2"><BeltBadge belt={t.belt_level} /><span className="text-[10px] uppercase tracking-wider text-muted-foreground">{t.category}</span></div>
-                </div>
-                <button onClick={() => remove(t.id)} className="flex h-8 w-8 items-center justify-center rounded-lg border border-destructive/40 text-destructive hover:bg-destructive/10" aria-label="Eliminar">
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section>
-        <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Globales / compartidas ({shared.length})</p>
-        <p className="text-xs text-muted-foreground">Estas técnicas se ven en todas las sucursales.</p>
-      </section>
-    </div>
+    </li>
   );
 }

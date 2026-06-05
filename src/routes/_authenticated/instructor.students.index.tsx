@@ -48,7 +48,7 @@ function InstructorStudents() {
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Atletas</p>
         <h1 className="mt-1 font-display text-3xl font-bold text-foreground">Alumnos</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Frecuencia, faixa, técnicas y campeonatos de cada uno.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Frecuencia, cinturón, técnicas y campeonatos de cada uno.</p>
       </div>
 
       <div className="relative">

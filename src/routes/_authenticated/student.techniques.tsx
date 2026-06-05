@@ -71,7 +71,7 @@ function TechniquesPage() {
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Biblioteca</p>
         <h1 className="mt-1 font-display text-3xl font-bold text-foreground">Técnicas</h1>
         <p className="mt-1 text-xs text-muted-foreground">
-          Tu faixa: <BeltBadge belt={studentBelt} /> · acceso a {allowedBelts.length} {allowedBelts.length === 1 ? "nivel" : "niveles"}
+          Tu cinturón: <BeltBadge belt={studentBelt} /> · acceso a {allowedBelts.length} {allowedBelts.length === 1 ? "nivel" : "niveles"}
         </p>
       </div>
 
@@ -87,7 +87,7 @@ function TechniquesPage() {
                 className={`shrink-0 rounded-full border px-3 py-1.5 transition-liquid ${
                   belt === b && !locked ? "border-primary bg-primary/10" : "border-border bg-surface"
                 } ${locked ? "opacity-40" : ""}`}
-                aria-label={locked ? `Bloqueado — faixa superior` : `Ver ${b}`}
+                aria-label={locked ? `Bloqueado — cinturón superior` : `Ver ${b}`}
               >
                 <span className="flex items-center gap-1.5">
                   <BeltBadge belt={b} />
