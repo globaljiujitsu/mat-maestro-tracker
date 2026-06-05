@@ -4,6 +4,7 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { BottomTabs, type TabItem } from "@/components/BottomTabs";
 import { LogOut, LayoutDashboard, Users, Building2, Trophy } from "lucide-react";
 import { NotificationsBell } from "@/components/NotificationsBell";
+import { TextSizeControl } from "@/components/TextSizeControl";
 
 const TABS: TabItem[] = [
   { to: "/admin", label: "Panel", icon: LayoutDashboard },
@@ -28,6 +29,7 @@ function AdminLayout() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-3">
           <BrandLogo size="sm" />
           <div className="flex items-center gap-2">
+            <TextSizeControl />
             <NotificationsBell />
             <button
               onClick={signOut}
