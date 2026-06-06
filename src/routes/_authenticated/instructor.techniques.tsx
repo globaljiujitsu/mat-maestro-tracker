@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { EmptyState } from "@/components/EmptyState";
-import { Sparkles, PlayCircle, Save, Trash2, ExternalLink } from "lucide-react";
+import { Sparkles, PlayCircle, Save, Trash2, ExternalLink, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useMemo, useState } from "react";
 import { BeltBadge } from "@/components/BeltBadge";
