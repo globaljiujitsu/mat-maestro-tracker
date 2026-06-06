@@ -100,6 +100,13 @@ function TechniquesLibrary() {
         </div>
       </div>
 
+      <NewTechniqueForm
+        belt={belt}
+        branchId={myBranchId}
+        userId={userId}
+        onCreated={() => qc.invalidateQueries({ queryKey: ["techniques-library"] })}
+      />
+
       {isLoading ? null : list.length === 0 ? (
         <EmptyState icon={Sparkles} title="Sin técnicas" description="No hay técnicas para este cinturón." />
       ) : (
@@ -113,6 +120,77 @@ function TechniquesLibrary() {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function NewTechniqueForm({
+  belt,
+  branchId,
+  userId,
+  onCreated,
+}: {
+  belt: Belt;
+  branchId: string | null;
+  userId: string;
+  onCreated: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+
+  const create = useMutation({
+    mutationFn: async () => {
+      if (!title.trim() || !category.trim()) throw new Error("Título y categoría son obligatorios");
+      const { error } = await supabase.from("techniques").insert({
+        title: title.trim(),
+        category: category.trim(),
+        description: description.trim() || null,
+        belt_level: belt,
+        branch_id: branchId,
+        uploaded_by: userId || null,
+        video_url: videoUrl.trim() ? toEmbedUrl(videoUrl.trim()) : null,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Técnica creada");
+      setTitle(""); setCategory(""); setDescription(""); setVideoUrl(""); setOpen(false);
+      onCreated();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/50 bg-primary/5 px-4 py-3 text-sm font-bold uppercase tracking-wider text-primary hover:bg-primary/10"
+      >
+        <Plus className="h-4 w-4" /> Crear técnica nueva
+      </button>
+    );
+  }
+
+  return (
+    <div className="space-y-3 rounded-2xl border border-primary/40 bg-surface p-4 shadow-elevated">
+      <div className="flex items-center justify-between">
+        <p className="font-display text-base font-semibold text-foreground">Nueva técnica · <BeltBadge belt={belt} /></p>
+        <button onClick={() => setOpen(false)} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground">Cerrar</button>
+      </div>
+      <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título (ej: Armbar desde la guardia)" className="input-base" />
+      <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Categoría (ej: Sumisiones, Guardia, Pasajes)" className="input-base" />
+      <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descripción (opcional)" rows={2} className="input-base" />
+      <input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="URL del video (Google Drive o YouTube) — opcional" className="input-base" />
+      <button
+        onClick={() => create.mutate()}
+        disabled={create.isPending}
+        className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-gold px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-gold disabled:opacity-60"
+      >
+        <Save className="h-4 w-4" /> Crear técnica
+      </button>
     </div>
   );
 }
