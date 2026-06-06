@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS trg_track_hours ON public.attendance;
