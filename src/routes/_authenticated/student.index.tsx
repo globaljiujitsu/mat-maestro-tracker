@@ -63,7 +63,26 @@ function StudentHome() {
     },
   });
 
+  const { data: attendancePct } = useQuery({
+    queryKey: ["attendance-pct", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const { data } = await supabase
+        .from("attendance")
+        .select("check_in_status, classes!inner(date)")
+        .eq("student_id", userId)
+        .eq("booking_status", "confirmed")
+        .lte("classes.date", today);
+      const rows = (data ?? []).filter((r) => r.classes);
+      if (rows.length === 0) return 0;
+      const present = rows.filter((r) => r.check_in_status === "present").length;
+      return Math.round((present / rows.length) * 100);
+    },
+  });
+
   const monthStartIso = (() => { const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10); })();
+
   const { data: myRank } = useQuery({
     queryKey: ["my-rank", userId, monthStartIso, student?.branch_id ?? null],
     enabled: !!userId,
