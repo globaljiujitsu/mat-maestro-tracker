@@ -63,6 +63,20 @@ function StudentHome() {
     },
   });
 
+  const monthStartIso = (() => { const d = new Date(); d.setDate(1); return d.toISOString().slice(0, 10); })();
+  const { data: myRank } = useQuery({
+    queryKey: ["my-rank", userId, monthStartIso, student?.branch_id ?? null],
+    enabled: !!userId,
+    queryFn: async () => {
+      const args: { _month: string; _limit: number; _branch_id?: string } = { _month: monthStartIso, _limit: 999 };
+      if (student?.branch_id) args._branch_id = student.branch_id;
+      const { data } = await supabase.rpc("monthly_top_students", args);
+      const rows = data ?? [];
+      const idx = rows.findIndex((r: { student_id: string }) => r.student_id === userId);
+      return idx >= 0 ? idx + 1 : null;
+    },
+  });
+
   const firstName = (profile?.full_name ?? "").split(" ")[0] || "Atleta";
 
   return (
@@ -81,7 +95,7 @@ function StudentHome() {
       <section className="grid grid-cols-2 gap-3">
         <Stat icon={<Activity />} label="Asistencia" value={`${Number(student?.attendance_percentage ?? 0).toFixed(0)}%`} />
         <Stat icon={<Clock />} label="Horas" value={`${Number(student?.total_training_hours ?? 0).toFixed(0)} h`} />
-        <Stat icon={<Trophy />} label="Ranking" value={student?.ranking_position_branch ? `#${student.ranking_position_branch}` : "—"} />
+        <Stat icon={<Trophy />} label="Ranking mes" value={myRank ? `#${myRank}` : "—"} />
         <Stat icon={<Award />} label="Campeonatos" value={String(champCount ?? 0)} />
       </section>
 
