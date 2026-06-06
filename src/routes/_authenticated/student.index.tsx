@@ -112,7 +112,7 @@ function StudentHome() {
       </section>
 
       <section className="grid grid-cols-2 gap-3">
-        <Stat icon={<Activity />} label="Asistencia" value={`${Number(student?.attendance_percentage ?? 0).toFixed(0)}%`} />
+        <Stat icon={<Activity />} label="Asistencia" value={`${attendancePct ?? 0}%`} />
         <Stat icon={<Clock />} label="Horas" value={`${Number(student?.total_training_hours ?? 0).toFixed(0)} h`} />
         <Stat icon={<Trophy />} label="Ranking mes" value={myRank ? `#${myRank}` : "—"} />
         <Stat icon={<Award />} label="Campeonatos" value={String(champCount ?? 0)} />
